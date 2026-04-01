@@ -6,8 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+const mainPageOptions = [
+  { value: "home", label: "Home", description: "Standaard homepage met hero, diensten, portfolio en contact secties" },
+  { value: "catalogus", label: "Catalogus", description: "Productcatalogus met categorieën en filters" },
+];
+
 export default function InstellingenPage() {
   const [saved, setSaved] = useState(false);
+  const [mainPage, setMainPage] = useState("catalogus");
 
   function handleSave() {
     setSaved(true);
@@ -24,6 +30,42 @@ export default function InstellingenPage() {
       </div>
 
       <div className="space-y-6">
+        {/* Hoofdpagina */}
+        <Card>
+          <div className="p-5">
+            <h3 className="text-base font-semibold text-foreground">Hoofdpagina</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Kies welke pagina bezoekers als eerste zien wanneer ze de website bezoeken.
+            </p>
+          </div>
+          <Separator />
+          <div className="p-5 space-y-3">
+            {mainPageOptions.map((option) => (
+              <label
+                key={option.value}
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  mainPage === option.value
+                    ? "border-brand-green bg-brand-green/5"
+                    : "border-border hover:border-muted-foreground/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="mainPage"
+                  value={option.value}
+                  checked={mainPage === option.value}
+                  onChange={(e) => setMainPage(e.target.value)}
+                  className="mt-0.5 accent-brand-green"
+                />
+                <div>
+                  <span className="text-sm font-medium text-foreground">{option.label}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </Card>
+
         {/* Bedrijfsgegevens */}
         <Card>
           <div className="p-5">
