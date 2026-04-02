@@ -1,9 +1,10 @@
 import { getPublicProducts } from "@/lib/actions/products";
 import { getCategories } from "@/lib/actions/categories";
+import { getSettings } from "@/lib/actions/settings";
 import CatalogusClient from "./catalogus-client";
 
-// Curated quick-access icon categories (popular subcategories for icon row)
-const quickCategories = [
+// Fallback icons if nothing configured in settings
+const defaultQuickCategories = [
   { name: "Pennen", slug: "pennen", icon: "pen" },
   { name: "Notitieboeken", slug: "notitieboeken", icon: "notebook" },
   { name: "Tote Bags", slug: "tote-bags", icon: "bag" },
@@ -16,19 +17,28 @@ const quickCategories = [
   { name: "Sleutelhangers", slug: "acryl-sleutelhangers", icon: "keychain" },
   { name: "Koeltassen", slug: "koeltassen", icon: "coolerbag" },
   { name: "Hoodies", slug: "hoodies", icon: "hoodie" },
-  { name: "Schorten", slug: "schorten", icon: "apron" },
-  { name: "Power Banks", slug: "power-banks", icon: "gadget" },
-  { name: "Promo Ideeën", slug: "promo-ideeen", icon: "idea" },
 ];
 
 export default async function CatalogusPage() {
-  const [rawProducts, rawCategories] = await Promise.all([
+  const [rawProducts, rawCategories, settings] = await Promise.all([
     getPublicProducts(),
     getCategories("PRODUCT" as const),
+    getSettings("general"),
   ]);
 
+  // Load quick categories from settings, fallback to defaults
+  let quickCategories = defaultQuickCategories;
+  try {
+    const parsed = JSON.parse(settings.catalog_icons || "[]");
+    const filtered = parsed.filter((i: { name: string }) => i.name?.trim());
+    if (filtered.length > 0) quickCategories = filtered;
+  } catch { /* use defaults */ }
+
+  const mobileCols = parseInt(settings.catalog_icons_mobile_cols || "3", 10);
+  const desktopCols = parseInt(settings.catalog_icons_desktop_cols || "4", 10);
+
   // Map products to client format
-  const products = rawProducts.map((p) => ({
+  const products = rawProducts.map((p: typeof rawProducts[number]) => ({
     slug: p.slug,
     name: p.name,
     categorySlug: p.category?.slug ?? "",
@@ -38,11 +48,11 @@ export default async function CatalogusPage() {
   }));
 
   // Map categories with subcategories to client format
-  const categories = rawCategories.map((c) => ({
+  const categories = rawCategories.map((c: typeof rawCategories[number]) => ({
     name: c.name,
     slug: c.slug,
     icon: c.icon ?? "folder",
-    subcategories: c.children.map((sub) => ({
+    subcategories: c.children.map((sub: typeof c.children[number]) => ({
       name: sub.name,
       slug: sub.slug,
     })),
@@ -53,6 +63,13 @@ export default async function CatalogusPage() {
       products={products}
       categories={categories}
       quickCategories={quickCategories}
+      mobileCols={mobileCols}
+      desktopCols={desktopCols}
+      heroBadge={settings.catalog_hero_badge || "Promotie Materiaal"}
+      heroTitle={settings.catalog_hero_title || "Promotioneel Materiaal Catalogus"}
+      heroSubtitle={settings.catalog_hero_subtitle || "Ontdek onze collectie promotionele producten. Alles is volledig aan te passen met uw logo en huisstijl."}
+      heroImage={settings.catalog_hero_image || ""}
+      heroOverlayOpacity={parseInt(settings.catalog_hero_overlay || "60", 10)}
     />
   );
 }

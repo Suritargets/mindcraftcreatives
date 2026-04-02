@@ -13,7 +13,7 @@ import { ProductImageViewer } from "@/components/catalog/product-image-viewer";
 
 export async function generateStaticParams() {
   const products = await getPublicProducts();
-  return products.map((p) => ({ id: p.slug }));
+  return products.map((p: typeof products[number]) => ({ id: p.slug }));
 }
 
 export async function generateMetadata({
@@ -51,24 +51,24 @@ export default async function ProductPage({
 
   // Get all categories to find subcategory name
   const allCategories = await getCategories("PRODUCT" as const);
-  const parentCat = allCategories.find((c) => c.id === product.categoryId);
+  const parentCat = allCategories.find((c: typeof allCategories[number]) => c.id === product.categoryId);
   const subcategory = parentCat?.children.find(
-    (s) => s.slug === product.subcategory
+    (s: { id: string; slug: string; name: string }) => s.slug === product.subcategory
   );
 
   // Related products: same category, exclude current
   const allProducts = await getPublicProducts();
   const related = allProducts
-    .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
+    .filter((p: typeof allProducts[number]) => p.categoryId === product.categoryId && p.id !== product.id)
     .slice(0, 4)
-    .map((p) => ({
+    .map((p: typeof allProducts[number]) => ({
       slug: p.slug,
       name: p.name,
       description: p.description,
       minOrder: p.minOrder,
     }));
 
-  const specs = product.specs.map((s) => ({
+  const specs = product.specs.map((s: typeof product.specs[number]) => ({
     label: s.label,
     values: s.values as string[],
   }));

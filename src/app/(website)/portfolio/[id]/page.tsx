@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 
 export async function generateStaticParams() {
   const items = await getPublicPortfolioItems();
-  return items.map((item) => ({ id: item.slug }));
+  return items.map((item: typeof items[number]) => ({ id: item.slug }));
 }
 
 export async function generateMetadata({
@@ -43,7 +43,7 @@ export default async function PortfolioDetailPage({
 
   // Get adjacent projects for navigation
   const allItems = await getPublicPortfolioItems();
-  const currentIdx = allItems.findIndex((i) => i.slug === id);
+  const currentIdx = allItems.findIndex((i: typeof allItems[number]) => i.slug === id);
   const prevItem = currentIdx > 0 ? allItems[currentIdx - 1] : null;
   const nextItem = currentIdx < allItems.length - 1 ? allItems[currentIdx + 1] : null;
 
