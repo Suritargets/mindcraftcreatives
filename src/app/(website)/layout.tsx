@@ -13,10 +13,10 @@ export default async function WebsiteLayout({
     getSetting("homepage"),
   ]);
 
-  const categories = rawCategories.map((c) => ({
+  const categories = rawCategories.map((c: typeof rawCategories[number]) => ({
     name: c.name,
     slug: c.slug,
-    subcategories: c.children.map((sub) => ({
+    subcategories: c.children.map((sub: typeof c.children[number]) => ({
       name: sub.name,
       slug: sub.slug,
     })),
