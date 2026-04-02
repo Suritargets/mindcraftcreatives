@@ -6,14 +6,12 @@ export default defineConfig({
   schema: path.join(__dirname, "schema.prisma"),
   datasource: {
     async url() {
-      const dbUrl = env("DATABASE_URL_UNPOOLED") || env("DATABASE_URL");
-      return dbUrl;
+      return env("DATABASE_URL_UNPOOLED") || env("DATABASE_URL");
     },
   },
   migrate: {
     async url() {
-      const dbUrl = env("DATABASE_URL_UNPOOLED") || env("DATABASE_URL");
-      return dbUrl;
+      return env("DATABASE_URL_UNPOOLED") || env("DATABASE_URL");
     },
   },
 });

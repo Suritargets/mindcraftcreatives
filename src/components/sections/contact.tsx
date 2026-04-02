@@ -1,11 +1,13 @@
 "use client";
 
+import { useActionState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { submitContactForm, type ContactFormState } from "@/lib/actions/contact";
 
 const contactInfo = [
   {
@@ -42,6 +44,19 @@ const contactInfo = [
 ];
 
 export function ContactSection() {
+  const [state, formAction, isPending] = useActionState<ContactFormState, FormData>(
+    submitContactForm,
+    null
+  );
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Reset form on success
+  useEffect(() => {
+    if (state?.success) {
+      formRef.current?.reset();
+    }
+  }, [state]);
+
   return (
     <section id="contact" className="py-20 md:py-28 bg-muted/50">
       <div className="container mx-auto px-4 md:px-6">
@@ -62,57 +77,73 @@ export function ContactSection() {
           {/* Contact Form */}
           <Card className="lg:col-span-3">
             <CardContent className="p-6 md:p-8">
-              <form className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="name"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      Naam
-                    </label>
-                    <Input id="name" placeholder="Uw volledige naam" />
+              {state?.success ? (
+                <div className="rounded-md bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 p-4 text-sm text-green-800 dark:text-green-200">
+                  {state.message}
+                </div>
+              ) : null}
+              {state && !state.success ? (
+                <div className="rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4 text-sm text-red-800 dark:text-red-200 mb-4">
+                  {state.message}
+                </div>
+              ) : null}
+              {!state?.success ? (
+                <form ref={formRef} action={formAction} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="name"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Naam
+                      </label>
+                      <Input id="name" name="name" placeholder="Uw volledige naam" required />
+                    </div>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="email"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Email
+                      </label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="uw@email.com"
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label
-                      htmlFor="email"
+                      htmlFor="subject"
                       className="text-sm font-medium text-foreground"
                     >
-                      Email
+                      Onderwerp
                     </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="uw@email.com"
+                    <Input id="subject" name="subject" placeholder="Waar gaat het over?" required />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="message"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Bericht
+                    </label>
+                    <Textarea
+                      id="message"
+                      name="message"
+                      placeholder="Vertel ons meer over uw project..."
+                      rows={5}
+                      required
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="subject"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Onderwerp
-                  </label>
-                  <Input id="subject" placeholder="Waar gaat het over?" />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="message"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Bericht
-                  </label>
-                  <Textarea
-                    id="message"
-                    placeholder="Vertel ons meer over uw project..."
-                    rows={5}
-                  />
-                </div>
-                <Button type="submit" size="lg" className="w-full font-semibold">
-                  Verstuur Bericht
-                </Button>
-              </form>
+                  <Button type="submit" size="lg" className="w-full font-semibold" disabled={isPending}>
+                    {isPending ? "Versturen..." : "Verstuur Bericht"}
+                  </Button>
+                </form>
+              ) : null}
             </CardContent>
           </Card>
 

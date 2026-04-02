@@ -15,7 +15,31 @@ export interface HeaderCategory {
   subcategories: { name: string; slug: string }[];
 }
 
-export function Header({ categories = [], logoHref = "/catalogus" }: { categories?: HeaderCategory[]; logoHref?: string }) {
+export interface HeaderMenuItem {
+  id: string;
+  label: string;
+  href: string;
+  children?: HeaderMenuItem[];
+}
+
+const defaultMainMenu: HeaderMenuItem[] = [
+  { id: "d1", label: "Catalogus", href: "/catalogus" },
+  { id: "d2", label: "Wat Wij Doen", href: "/wat-wij-doen" },
+  { id: "d3", label: "Portfolio", href: "/portfolio" },
+];
+
+export function Header({
+  categories = [],
+  logoHref = "/catalogus",
+  mainMenu,
+  footerMenu: _footerMenu,
+}: {
+  categories?: HeaderCategory[];
+  logoHref?: string;
+  mainMenu?: HeaderMenuItem[];
+  footerMenu?: HeaderMenuItem[];
+}) {
+  const navItems = mainMenu && mainMenu.length > 0 ? mainMenu : defaultMainMenu;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(0);
@@ -157,9 +181,20 @@ export function Header({ categories = [], logoHref = "/catalogus" }: { categorie
                     </div>
                   </div>
 
-                  <Link href="/catalogus" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-accent">Catalogus</Link>
-                  <Link href="/wat-wij-doen" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Wat Wij Doen</Link>
-                  <Link href="/portfolio" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Portfolio</Link>
+                  {navItems.map((item: typeof navItems[number], index: number) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`px-3 py-3 text-base font-medium transition-colors rounded-md hover:bg-accent ${
+                        index === 0
+                          ? "text-primary hover:text-primary/80"
+                          : "text-foreground hover:text-primary"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
 
                   <Separator className="my-3" />
                   <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Categorieën</p>
@@ -200,16 +235,22 @@ export function Header({ categories = [], logoHref = "/catalogus" }: { categorie
 
           {/* Nav links */}
           <nav className="flex items-center">
-            <Link href="/catalogus" className="h-11 px-5 flex items-center text-sm font-medium text-foreground hover:text-primary transition-colors relative">
-              Catalogus
-              <span className="absolute bottom-2 left-5 right-5 h-0.5 bg-primary rounded-full" />
-            </Link>
-            <Link href="/wat-wij-doen" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Wat Wij Doen
-            </Link>
-            <Link href="/portfolio" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Portfolio
-            </Link>
+            {navItems.map((item: typeof navItems[number], index: number) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`h-11 px-5 flex items-center text-sm font-medium transition-colors ${
+                  index === 0
+                    ? "text-foreground hover:text-primary relative"
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                {item.label}
+                {index === 0 && (
+                  <span className="absolute bottom-2 left-5 right-5 h-0.5 bg-primary rounded-full" />
+                )}
+              </Link>
+            ))}
           </nav>
         </div>
       </div>

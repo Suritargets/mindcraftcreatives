@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { categoryIconMap } from "@/components/icons/category-icons";
 
 export interface QuickCategory {
@@ -53,7 +54,15 @@ export function IconCategories({ quickCategories, activeFilter, onFilter, mobile
                 }`}
               >
                 <div className="h-10 w-10 md:h-16 md:w-16 flex items-center justify-center">
-                  {Icon ? (
+                  {item.customImage ? (
+                    <Image
+                      src={item.customImage}
+                      alt={item.name}
+                      width={56}
+                      height={56}
+                      className="h-9 w-9 md:h-14 md:w-14 object-contain"
+                    />
+                  ) : Icon ? (
                     <Icon className="h-9 w-9 md:h-14 md:w-14" />
                   ) : (
                     <svg className="h-9 w-9 md:h-14 md:w-14" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5">
