@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export async function generateStaticParams() {
-  const items = await getPublicPortfolioItems();
-  return items.map((item: typeof items[number]) => ({ id: item.slug }));
+  try {
+    const items = await getPublicPortfolioItems();
+    return items.map((item: typeof items[number]) => ({ id: item.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

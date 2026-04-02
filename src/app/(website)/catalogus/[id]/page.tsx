@@ -12,8 +12,12 @@ import { ProductDetailTabs } from "@/components/catalog/product-detail-tabs";
 import { ProductImageViewer } from "@/components/catalog/product-image-viewer";
 
 export async function generateStaticParams() {
-  const products = await getPublicProducts();
-  return products.map((p: typeof products[number]) => ({ id: p.slug }));
+  try {
+    const products = await getPublicProducts();
+    return products.map((p: typeof products[number]) => ({ id: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
