@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// CATEGORIEËN & TAXONOMIE
+// ============================================
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  icon          String        @default("folder")
+  type          CategoryType  @default(PRODUCT)
+  parentId      String?
+  parent        Category?     @relation("CategoryTree", fields: [parentId], references: [id])
+  children      Category[]    @relation("CategoryTree")
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  products      Product[]
+  services      Service[]
+  portfolioItems PortfolioItem[]
+
+  @@index([type])
+  @@index([parentId])
+}
+
+enum CategoryType {
+  PRODUCT
+  SERVICE
+  PORTFOLIO
+}
+
+// ============================================
+// PRODUCTEN
+// ============================================
+
+model Product {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String
+  longDescription String?     @db.Text
+  minOrder      String
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+  subcategory   String?
+  status        ProductStatus @default(ACTIEF)
+  featuredImage String?
+  gallery       String[]
+  specs         ProductSpec[]
+  printMethods  String[]
+  advantages    String[]
+  tags          String[]
+  metaTitle     String?
+  metaDescription String?
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  quoteItems    QuoteItem[]
+
+  @@index([categoryId])
+  @@index([status])
+}
+
+enum ProductStatus {
+  ACTIEF
+  CONCEPT
+  GEARCHIVEERD
+}
+
+model ProductSpec {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label     String
+  values    String[]
+  sortOrder Int      @default(0)
+
+  @@index([productId])
+}
+
+// ============================================
+// DIENSTEN (SERVICES)
+// ============================================
+
+model Service {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String
+  longDescription String?     @db.Text
+  icon          String        @default("pen")
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+  status        ServiceStatus @default(ACTIEF)
+  features      String[]
+  featuredImage String?
+  gallery       String[]
+  tags          String[]
+  metaTitle     String?
+  metaDescription String?
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+}
+
+enum ServiceStatus {
+  ACTIEF
+  CONCEPT
+  GEARCHIVEERD
+}
+
+// ============================================
+// PORTFOLIO
+// ============================================
+
+model PortfolioItem {
+  id              String          @id @default(cuid())
+  title           String
+  slug            String          @unique
+  description     String
+  longDescription String?         @db.Text
+  client          String?
+  date            String?
+  categoryId      String
+  category        Category        @relation(fields: [categoryId], references: [id])
+  mediaType       MediaType       @default(FOTO)
+  videoUrl        String?
+  images          String[]
+  status          PortfolioStatus @default(CONCEPT)
+  tags            String[]
+  metaTitle       String?
+  metaDescription String?
+  sortOrder       Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+}
+
+enum MediaType {
+  FOTO
+  SLIDER
+  VIDEO
+}
+
+enum PortfolioStatus {
+  GEPUBLICEERD
+  CONCEPT
+}
+
+// ============================================
+// OFFERTES (QUOTES)
+// ============================================
+
+model Quote {
+  id            String      @id @default(cuid())
+  quoteNumber   String      @unique
+  company       String
+  contact       String
+  email         String
+  phone         String
+  date          DateTime    @default(now())
+  status        QuoteStatus @default(NIEUW)
+  items         QuoteItem[]
+  internalNotes String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([status])
+  @@index([quoteNumber])
+}
+
+enum QuoteStatus {
+  NIEUW
+  IN_BEHANDELING
+  OFFERTE_VERSTUURD
+  AFGEROND
+}
+
+model QuoteItem {
+  id        String  @id @default(cuid())
+  quoteId   String
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  productName String
+  quantity  Int
+  notes     String?
+  sortOrder Int     @default(0)
+
+  @@index([quoteId])
+}
+
+// ============================================
+// WIDGETS
+// ============================================
+
+model Widget {
+  id        String       @id @default(cuid())
+  name      String
+  type      WidgetType
+  enabled   Boolean      @default(true)
+  position  WidgetPosition
+  config    Json         @default("{}")
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+enum WidgetType {
+  WHATSAPP
+  CTA_BANNER
+  NEWSLETTER
+  SOCIAL
+  CUSTOM
+}
+
+enum WidgetPosition {
+  HEADER
+  FOOTER
+  SIDEBAR
+  POPUP
+  FLOATING
+}
+
+// ============================================
+// COMMERCIAL ZONES
+// ============================================
+
+model CommercialArea {
+  id        String             @id @default(cuid())
+  name      String
+  location  String
+  type      CommercialAreaType
+  content   String             @db.Text
+  linkUrl   String
+  enabled   Boolean            @default(true)
+  sortOrder Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum CommercialAreaType {
+  BANNER
+  POPUP
+  INLINE
+  SIDEBAR
+}
+
+// ============================================
+// MEDIA BESTANDEN
+// ============================================
+
+model MediaFile {
+  id         String        @id @default(cuid())
+  filename   String
+  type       MediaFileType
+  size       Int
+  url        String
+  dimensions String?
+  alt        String?
+  uploadDate DateTime      @default(now())
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([type])
+}
+
+enum MediaFileType {
+  IMAGE
+  DOCUMENT
+  VIDEO
+}
+
+// ============================================
+// INSTELLINGEN (SETTINGS)
+// ============================================
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+  group String @default("general")
+
+  @@index([group])
+}

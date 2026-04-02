@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveTabs } from "@/components/admin/responsive-tabs";
 import { categories, products } from "@/lib/catalog-data";
 
 // Count products per category
@@ -45,6 +46,7 @@ export default function CategorieenPage() {
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const [serviceCategories, setServiceCategories] = useState(defaultServiceCategories);
   const [newServiceCat, setNewServiceCat] = useState("");
+  const [activeTab, setActiveTab] = useState("categorieen");
 
   function handleAddTag() {
     if (!newTag.trim()) return;
@@ -69,8 +71,20 @@ export default function CategorieenPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="categorieen" className="w-full">
-        <TabsList className="mb-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Mobile: dropdown */}
+        <ResponsiveTabs
+          className="mb-6 md:hidden"
+          value={activeTab}
+          onChange={setActiveTab}
+          items={[
+            { value: "categorieen", label: "Product Categorieën", count: categories.length },
+            { value: "diensten", label: "Dienst Categorieën", count: serviceCategories.length },
+            { value: "tags", label: "Tags", count: tags.length },
+          ]}
+        />
+        {/* Desktop: original tab bar */}
+        <TabsList className="mb-6 hidden md:inline-flex">
           <TabsTrigger value="categorieen">
             Product Categorieën
             <Badge variant="secondary" className="ml-2 text-[10px]">{categories.length}</Badge>
@@ -152,7 +166,7 @@ export default function CategorieenPage() {
                                   <span className="text-sm text-foreground">{sub.name}</span>
                                   <Badge variant="secondary" className="text-[10px]">{subCount}</Badge>
                                 </div>
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                   <button className="text-xs text-muted-foreground hover:text-foreground">Bewerk</button>
                                   <button className="text-xs text-muted-foreground hover:text-destructive">Verwijder</button>
                                 </div>
@@ -179,8 +193,8 @@ export default function CategorieenPage() {
             <div className="lg:col-span-2 space-y-3">
               {serviceCategories.map((cat) => (
                 <Card key={cat.id}>
-                  <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div className="h-9 w-9 rounded-md bg-brand-teal/10 flex items-center justify-center shrink-0">
                         <svg className="h-4 w-4 text-brand-teal" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437" />
@@ -191,7 +205,7 @@ export default function CategorieenPage() {
                         <p className="text-xs text-muted-foreground">{cat.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
                       <Badge variant="secondary" className="text-[10px]">{cat.serviceCount} diensten</Badge>
                       <Badge variant="outline" className="text-[10px]">{cat.slug}</Badge>
                       <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ export default function AppearancePage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Appearance</h1>
           <p className="text-sm text-muted-foreground mt-1">Pas het uiterlijk van de website aan.</p>
@@ -59,7 +59,7 @@ export default function AppearancePage() {
               <Separator />
               <div>
                 <label className="block text-xs text-muted-foreground mb-2">Preview</label>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <div className="h-16 w-16 rounded-lg" style={{ backgroundColor: primaryColor }} />
                   <div className="h-16 w-16 rounded-lg" style={{ backgroundColor: accentColor }} />
                   <div className="h-16 w-16 rounded-lg bg-foreground" />

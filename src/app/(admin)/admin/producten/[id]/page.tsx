@@ -12,72 +12,11 @@ import { products, categories } from "@/lib/catalog-data";
 import type { ProductSpec } from "@/lib/catalog-data";
 import { ImageUpload, GalleryUpload } from "@/components/admin/image-upload";
 import { TagCloud } from "@/components/admin/tag-cloud";
+import { CollapsibleCard } from "@/components/admin/collapsible-card";
 
 const productTagSuggestions = [
   "Populair", "Nieuw", "Bestseller", "Seizoen", "Premium", "Budget", "Eco-vriendelijk", "Kerst", "Bedrijfsevent",
 ];
-
-// Collapsible section component
-function CollapsibleCard({
-  title,
-  subtitle,
-  badge,
-  defaultOpen = true,
-  variant = "default",
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  badge?: string;
-  defaultOpen?: boolean;
-  variant?: "default" | "danger" | "sidebar";
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <Card className={variant === "danger" ? "border-destructive/30" : ""}>
-      <button
-        onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between text-left transition-colors ${
-          open
-            ? variant === "sidebar" ? "p-4" : "p-5"
-            : variant === "sidebar" ? "px-4 py-2.5" : "px-5 py-3"
-        } hover:bg-muted/20 rounded-lg`}
-      >
-        <div className="flex items-center gap-2">
-          <h3 className={
-            variant === "sidebar"
-              ? "text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-              : variant === "danger"
-              ? "text-sm font-semibold text-destructive"
-              : "text-sm font-semibold text-foreground"
-          }>
-            {title}
-          </h3>
-          {badge && (
-            <Badge variant="secondary" className="text-[10px]">{badge}</Badge>
-          )}
-        </div>
-        <svg
-          className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-      <div
-        className={`overflow-hidden transition-all duration-200 ease-in-out ${
-          open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className={variant === "sidebar" ? "px-4 pb-4" : "px-5 pb-5"}>
-          {children}
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 export default function ProductEditPage() {
   const params = useParams();
@@ -146,7 +85,7 @@ export default function ProductEditPage() {
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/admin/producten")}

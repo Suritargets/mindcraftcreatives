@@ -122,7 +122,7 @@ export function ImportCSVButton({ onImport, expectedColumns }: ImportButtonProps
   }
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2 flex-wrap">
       <Button
         variant="outline"
         size="sm"
@@ -176,7 +176,7 @@ export function ImportExportToolbar({
   expectedImportColumns,
 }: ImportExportToolbarProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <ExportCSVButton data={exportData} filename={exportFilename} columns={exportColumns} />
       <ImportCSVButton onImport={onImport} expectedColumns={expectedImportColumns} />
     </div>

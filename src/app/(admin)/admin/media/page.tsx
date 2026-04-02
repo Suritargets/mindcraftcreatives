@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ResponsiveTabs } from "@/components/admin/responsive-tabs";
 
 type MediaFileType = "image" | "document" | "video";
 
@@ -126,12 +127,12 @@ export default function MediaPage() {
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Media</h1>
           <p className="text-sm text-muted-foreground mt-1">Beheer al uw geüploade bestanden</p>
         </div>
-        <Button className="gap-1.5">
+        <Button className="gap-1.5 shrink-0 w-fit">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
           </svg>
@@ -173,21 +174,16 @@ export default function MediaPage() {
         </div>
 
         {/* Type filter */}
-        <div className="flex gap-1.5">
-          {(["all", "image", "document", "video"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                typeFilter === t
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {t === "all" ? "Alles" : t === "image" ? "Afbeeldingen" : t === "document" ? "Documenten" : "Video's"}
-            </button>
-          ))}
-        </div>
+        <ResponsiveTabs
+          value={typeFilter}
+          onChange={(v) => setTypeFilter(v as "all" | MediaFileType)}
+          items={[
+            { value: "all", label: "Alles", count: files.length },
+            { value: "image", label: "Afbeeldingen", count: files.filter((f) => f.type === "image").length },
+            { value: "document", label: "Documenten", count: files.filter((f) => f.type === "document").length },
+            { value: "video", label: "Video's", count: files.filter((f) => f.type === "video").length },
+          ]}
+        />
 
         {/* View toggle */}
         <div className="flex border rounded-md overflow-hidden ml-auto">
@@ -405,7 +401,7 @@ export default function MediaPage() {
       {/* Preview overlay */}
       {previewFile && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
           onClick={() => setPreviewFile(null)}
         >
           <div
