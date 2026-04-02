@@ -12,6 +12,7 @@ type SidebarContextType = {
   setCollapsed: (v: boolean) => void;
   mobileOpen: boolean;
   setMobileOpen: (v: boolean) => void;
+  logoutButton?: React.ReactNode;
 };
 
 const SidebarContext = createContext<SidebarContextType>({
@@ -19,6 +20,7 @@ const SidebarContext = createContext<SidebarContextType>({
   setCollapsed: () => {},
   mobileOpen: false,
   setMobileOpen: () => {},
+  logoutButton: undefined,
 });
 
 export function useSidebar() {
@@ -189,6 +191,7 @@ function SidebarCollapseButton() {
 // ---------- Sidebar content (shared between desktop & mobile) ----------
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
+  const { logoutButton } = useSidebar();
 
   return (
     <>
@@ -278,6 +281,12 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
         {/* Menu inklappen/uitklappen */}
         <SidebarCollapseButton />
+
+        {/* Logout */}
+        {logoutButton && !collapsed && logoutButton}
+        {logoutButton && collapsed && (
+          <div title="Uitloggen">{logoutButton}</div>
+        )}
 
         {/* User */}
         <div className={cn(
@@ -395,7 +404,7 @@ function MobileHeader() {
 }
 
 // ---------- Main export: wraps the full layout ----------
-export function AdminSidebarProvider({ children }: { children: React.ReactNode }) {
+export function AdminSidebarProvider({ children, logoutButton }: { children: React.ReactNode; logoutButton?: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -410,7 +419,7 @@ export function AdminSidebarProvider({ children }: { children: React.ReactNode }
   }, [collapsed]);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen, logoutButton }}>
       <div className="flex min-h-screen bg-muted/30">
         <DesktopSidebar />
         <MobileSidebar />
