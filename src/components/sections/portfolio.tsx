@@ -6,7 +6,7 @@ import { PortfolioSlider } from "./portfolio-slider";
 export async function PortfolioSection() {
   const items = await getPublicPortfolioItems();
 
-  const sliderItems = items.map((item) => ({
+  const sliderItems = items.map((item: typeof items[number]) => ({
     id: item.id,
     slug: item.slug,
     title: item.title,

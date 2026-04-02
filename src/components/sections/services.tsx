@@ -59,7 +59,7 @@ export async function ServicesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayServices.map((service) => (
+          {displayServices.map((service: typeof displayServices[number]) => (
             <Card
               key={service.id}
               className="group hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
