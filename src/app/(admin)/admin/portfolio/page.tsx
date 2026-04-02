@@ -8,7 +8,7 @@ export default async function PortfolioPage() {
     getCategories("PORTFOLIO"),
   ]);
 
-  const items = rawItems.map((item) => ({
+  const items = rawItems.map((item: typeof rawItems[number]) => ({
     id: item.id,
     title: item.title,
     description: item.description,
@@ -20,7 +20,7 @@ export default async function PortfolioPage() {
     status: item.status === "GEPUBLICEERD" ? ("gepubliceerd" as const) : ("concept" as const),
   }));
 
-  const categories = rawCategories.map((cat) => ({
+  const categories = rawCategories.map((cat: typeof rawCategories[number]) => ({
     id: cat.id,
     name: cat.name,
     slug: cat.slug,

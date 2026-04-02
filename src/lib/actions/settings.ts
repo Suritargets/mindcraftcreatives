@@ -32,6 +32,9 @@ export async function updateSettings(data: Record<string, string>, group?: strin
   }
 
   revalidatePath("/admin/instellingen");
+  revalidatePath("/admin/menu");
+  revalidatePath("/admin/paginas");
+  revalidatePath("/admin/appearance");
   revalidatePath("/");
   revalidatePath("/catalogus");
 }

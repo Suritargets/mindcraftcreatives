@@ -1,6 +1,6 @@
 import { getPublicProducts, getPublicProductBySlug } from "@/lib/actions/products";
 import { getCategories } from "@/lib/actions/categories";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +40,11 @@ export default async function ProductPage({
 
   if (!product) {
     notFound();
+  }
+
+  // If accessed by ID instead of slug, redirect to canonical slug URL
+  if (product.slug !== id) {
+    redirect(`/catalogus/${product.slug}`);
   }
 
   const category = product.category;

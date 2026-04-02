@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { updateSettings } from "@/lib/actions/settings";
+import { categoryIconMap } from "@/components/icons/category-icons";
 
 export default function InstellingenClient({ initialSettings }: { initialSettings: Record<string, string> }) {
   const [settings, setSettings] = useState(initialSettings);
@@ -263,6 +264,266 @@ export default function InstellingenClient({ initialSettings }: { initialSetting
                 <Input value={settings.stat4_label || "Snelle Levering"} onChange={(e) => updateField("stat4_label", e.target.value)} className="h-9" />
               </div>
             </div>
+          </div>
+        </Card>
+
+        {/* Catalogus Hero */}
+        <Card>
+          <div className="p-5">
+            <h3 className="text-base font-semibold text-foreground">Catalogus Hero</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">De grote banner bovenaan de catalogus pagina.</p>
+          </div>
+          <Separator />
+          <div className="p-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Badge tekst</label>
+              <Input
+                value={settings.catalog_hero_badge || "Promotie Materiaal"}
+                onChange={(e) => updateField("catalog_hero_badge", e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Titel</label>
+              <Input
+                value={settings.catalog_hero_title || "Promotioneel Materiaal Catalogus"}
+                onChange={(e) => updateField("catalog_hero_title", e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Ondertitel</label>
+              <Textarea
+                value={settings.catalog_hero_subtitle || "Ontdek onze collectie promotionele producten. Alles is volledig aan te passen met uw logo en huisstijl."}
+                onChange={(e) => updateField("catalog_hero_subtitle", e.target.value)}
+                rows={2}
+              />
+            </div>
+            <Separator />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Achtergrond afbeelding</p>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Afbeelding URL</label>
+              <Input
+                value={settings.catalog_hero_image || ""}
+                onChange={(e) => updateField("catalog_hero_image", e.target.value)}
+                placeholder="https://... of /afbeelding.jpg"
+                className="h-10"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Laat leeg voor een effen rode achtergrond. Voeg een URL toe voor een achtergrondafbeelding met overlay effect.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Overlay sterkte: <span className="text-primary font-bold">{settings.catalog_hero_overlay || "60"}%</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={settings.catalog_hero_overlay || "60"}
+                onChange={(e) => updateField("catalog_hero_overlay", e.target.value)}
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                <span>0% — Alleen afbeelding</span>
+                <span>100% — Alleen kleur</span>
+              </div>
+            </div>
+            {/* Preview */}
+            {settings.catalog_hero_image && (
+              <div className="relative rounded-lg overflow-hidden h-24">
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${settings.catalog_hero_image})` }}
+                />
+                <div
+                  className="absolute inset-0 bg-primary"
+                  style={{ opacity: parseInt(settings.catalog_hero_overlay || "60", 10) / 100 }}
+                />
+                <div className="relative z-10 flex items-center justify-center h-full">
+                  <p className="text-white font-semibold text-sm">Preview</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Catalogus Iconen */}
+        <Card>
+          <div className="p-5">
+            <h3 className="text-base font-semibold text-foreground">Catalogus Iconen</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Beheer welke categorie-iconen getoond worden bovenaan de catalogus pagina. Max 12 iconen.
+            </p>
+          </div>
+          <Separator />
+          <div className="p-5 space-y-4">
+            {(() => {
+              const availableIcons = [
+                { key: "pen", label: "Pen" },
+                { key: "notebook", label: "Notitieboek" },
+                { key: "bag", label: "Tas" },
+                { key: "bottle", label: "Fles" },
+                { key: "backpack", label: "Rugzak" },
+                { key: "umbrella", label: "Paraplu" },
+                { key: "mug", label: "Mok (Travel)" },
+                { key: "ceramicmug", label: "Mok (Keramisch)" },
+                { key: "tshirt", label: "T-Shirt" },
+                { key: "keychain", label: "Sleutelhanger" },
+                { key: "coolerbag", label: "Koeltas" },
+                { key: "hoodie", label: "Hoodie" },
+                { key: "apron", label: "Schort" },
+                { key: "gadget", label: "Gadget" },
+                { key: "banner", label: "Banner" },
+                { key: "idea", label: "Idee" },
+                { key: "custom", label: "Custom afbeelding" },
+              ];
+
+              // Parse current icons from settings (JSON string)
+              let currentIcons: { name: string; slug: string; icon: string; customImage?: string }[] = [];
+              try {
+                currentIcons = JSON.parse(settings.catalog_icons || "[]");
+              } catch { /* ignore */ }
+
+              // Ensure 12 slots
+              while (currentIcons.length < 12) {
+                currentIcons.push({ name: "", slug: "", icon: "pen", customImage: "" });
+              }
+
+              function updateIcon(index: number, field: string, value: string) {
+                const updated = [...currentIcons];
+                updated[index] = { ...updated[index], [field]: value };
+                updateField("catalog_icons", JSON.stringify(updated));
+              }
+
+              function moveIcon(index: number, direction: -1 | 1) {
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= currentIcons.length) return;
+                const updated = [...currentIcons];
+                [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+                updateField("catalog_icons", JSON.stringify(updated));
+              }
+
+              return (
+                <div className="space-y-3">
+                  {currentIcons.slice(0, 12).map((item, index) => {
+                    const IconComponent = item.icon && item.icon !== "custom" ? categoryIconMap[item.icon] : null;
+                    const isCustom = item.icon === "custom";
+
+                    return (
+                      <div key={index} className="rounded-lg border bg-muted/20 overflow-hidden">
+                        <div className="flex items-center gap-3 p-3">
+                          {/* Icon preview */}
+                          <div className="h-12 w-12 rounded-lg border bg-white flex items-center justify-center shrink-0">
+                            {isCustom && item.customImage ? (
+                              <img src={item.customImage} alt="" className="h-10 w-10 object-contain" />
+                            ) : IconComponent ? (
+                              <IconComponent className="h-9 w-9 text-muted-foreground" />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">?</span>
+                            )}
+                          </div>
+
+                          {/* Position number */}
+                          <span className="text-xs font-bold text-muted-foreground w-4 text-center shrink-0">{index + 1}</span>
+
+                          {/* Move buttons */}
+                          <div className="flex flex-col gap-0.5 shrink-0">
+                            <button type="button" onClick={() => moveIcon(index, -1)} disabled={index === 0} className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20">
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                            </button>
+                            <button type="button" onClick={() => moveIcon(index, 1)} disabled={index >= 11} className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20">
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                            </button>
+                          </div>
+
+                          {/* Icon selector */}
+                          <select
+                            value={item.icon || "pen"}
+                            onChange={(e) => updateIcon(index, "icon", e.target.value)}
+                            className="h-9 w-36 rounded-md border bg-background px-2 text-xs shrink-0"
+                          >
+                            {availableIcons.map((ic) => (
+                              <option key={ic.key} value={ic.key}>{ic.label}</option>
+                            ))}
+                          </select>
+
+                          {/* Name */}
+                          <Input
+                            value={item.name}
+                            onChange={(e) => updateIcon(index, "name", e.target.value)}
+                            placeholder="Weergavenaam"
+                            className="h-9 text-sm flex-1"
+                          />
+
+                          {/* Slug */}
+                          <Input
+                            value={item.slug}
+                            onChange={(e) => updateIcon(index, "slug", e.target.value)}
+                            placeholder="slug"
+                            className="h-9 text-sm w-32"
+                          />
+
+                          {/* Clear button */}
+                          <button type="button" onClick={() => updateIcon(index, "name", "")} className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0" title="Leegmaken">
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+
+                        {/* Custom image URL input (only shown when "custom" is selected) */}
+                        {isCustom && (
+                          <div className="px-3 pb-3 pt-0">
+                            <div className="flex items-center gap-2 p-2 rounded-md bg-muted/40 border border-dashed">
+                              <svg className="h-4 w-4 text-muted-foreground shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                              </svg>
+                              <Input
+                                value={item.customImage || ""}
+                                onChange={(e) => updateIcon(index, "customImage", e.target.value)}
+                                placeholder="Afbeelding URL (bijv. /icons/mijn-icon.png)"
+                                className="h-8 text-xs flex-1 border-0 bg-transparent p-0 focus-visible:ring-0"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <Separator className="my-4" />
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Layout</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-foreground mb-1.5">Mobile — kolommen per rij</label>
+                      <select
+                        value={settings.catalog_icons_mobile_cols || "3"}
+                        onChange={(e) => updateField("catalog_icons_mobile_cols", e.target.value)}
+                        className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      >
+                        <option value="2">2 per rij</option>
+                        <option value="3">3 per rij</option>
+                        <option value="4">4 per rij</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-foreground mb-1.5">Desktop — kolommen per rij</label>
+                      <select
+                        value={settings.catalog_icons_desktop_cols || "4"}
+                        onChange={(e) => updateField("catalog_icons_desktop_cols", e.target.value)}
+                        className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      >
+                        <option value="3">3 per rij</option>
+                        <option value="4">4 per rij</option>
+                        <option value="5">5 per rij</option>
+                        <option value="6">6 per rij</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Laat de naam leeg om een slot te verbergen. De slug moet overeenkomen met een bestaande subcategorie slug.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         </Card>
 

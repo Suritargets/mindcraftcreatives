@@ -29,6 +29,15 @@ type CategoryClient = {
   slug: string;
 };
 
+const examplePortfolio: Record<string, string>[] = [
+  { Titel: "Rebranding Fernandes Groep", Categorie: "branding", Beschrijving: "Complete merkidentiteit vernieuwing inclusief logo en huisstijl", "Media Type": "slider", Status: "gepubliceerd" },
+  { Titel: "Event Merchandise SuriPop", Categorie: "evenement", Beschrijving: "T-shirts, banners en promotional items voor muziekfestival", "Media Type": "foto", Status: "gepubliceerd" },
+  { Titel: "Voertuig Wrap Taxi Fleet", Categorie: "signage", Beschrijving: "Volledige voertuigbelettering voor 15 taxi's", "Media Type": "video", Status: "gepubliceerd" },
+  { Titel: "Packaging Design SuriSpice", Categorie: "verpakking", Beschrijving: "Verpakkingsontwerp voor nieuwe kruidenlijn", "Media Type": "slider", Status: "concept" },
+  { Titel: "Gevelreclame Restaurant Javaans", Categorie: "signage", Beschrijving: "LED gevelreclame en raambelettering", "Media Type": "foto", Status: "gepubliceerd" },
+  { Titel: "Social Media Campagne TeleSur", Categorie: "digitaal", Beschrijving: "Maandelijkse social media content creatie", "Media Type": "video", Status: "gepubliceerd" },
+];
+
 type PortfolioClientProps = {
   items: PortfolioItemClient[];
   categories: CategoryClient[];
@@ -93,6 +102,8 @@ export default function PortfolioClient({ items: initialItems, categories }: Por
             ]}
             onImport={(data) => console.log("Import:", data)}
             expectedImportColumns={["Titel", "Categorie"]}
+            exampleData={examplePortfolio}
+            exampleFilename="mindcraft-portfolio-voorbeeld"
           />
           <Button onClick={() => router.push("/admin/portfolio/nieuw")} className="gap-1.5 w-full sm:w-auto">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

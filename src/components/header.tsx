@@ -85,7 +85,7 @@ export function Header({ categories = [], logoHref = "/catalogus" }: { categorie
 
       {/* ===== LOGO BAR (logo + search) ===== */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-16 gap-4">
+        <div className="container mx-auto px-2 md:px-6 flex items-center justify-between h-12 md:h-14 gap-2 md:gap-4">
           {/* Logo */}
           <Link href={logoHref} className="shrink-0">
             <Image
@@ -93,7 +93,7 @@ export function Header({ categories = [], logoHref = "/catalogus" }: { categorie
               alt="Mindcraft Creatives"
               width={200}
               height={50}
-              className="h-10 w-auto object-contain"
+              className="h-8 md:h-10 w-auto object-contain"
               priority
             />
           </Link>

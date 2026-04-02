@@ -163,16 +163,28 @@ const bottomNav = [
       </svg>
     ),
   },
-  {
-    label: "Terug naar website",
-    href: "/",
-    icon: (
-      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-      </svg>
-    ),
-  },
 ];
+
+// ---------- Collapse toggle button (inside sidebar content) ----------
+function SidebarCollapseButton() {
+  const { collapsed, setCollapsed } = useSidebar();
+
+  return (
+    <button
+      onClick={() => setCollapsed(!collapsed)}
+      title={collapsed ? "Menu uitklappen" : "Menu inklappen"}
+      className={cn(
+        "flex items-center rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full",
+        collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2"
+      )}
+    >
+      <svg className={cn("h-4 w-4 shrink-0 transition-transform duration-300", collapsed && "rotate-180")} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+      </svg>
+      {!collapsed && "Menu inklappen"}
+    </button>
+  );
+}
 
 // ---------- Sidebar content (shared between desktop & mobile) ----------
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
@@ -234,6 +246,21 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
       {/* Bottom nav */}
       <div className="p-3 border-t space-y-1">
+        {/* Terug naar website — prominent button */}
+        <Link
+          href="/catalogus"
+          title={collapsed ? "Terug naar website" : undefined}
+          className={cn(
+            "flex items-center rounded-lg text-sm font-semibold transition-colors bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20",
+            collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5 mb-2"
+          )}
+        >
+          <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+          </svg>
+          {!collapsed && "Terug naar website"}
+        </Link>
+
         {bottomNav.map((item) => (
           <Link
             key={item.href}
@@ -248,6 +275,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             {!collapsed && item.label}
           </Link>
         ))}
+
+        {/* Menu inklappen/uitklappen */}
+        <SidebarCollapseButton />
 
         {/* User */}
         <div className={cn(
@@ -281,23 +311,6 @@ function DesktopSidebar() {
       )}
     >
       <SidebarContent collapsed={collapsed} />
-
-      {/* Collapse toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 z-10 h-6 w-6 rounded-full border bg-background shadow-sm flex items-center justify-center hover:bg-muted transition-colors"
-        aria-label={collapsed ? "Sidebar uitklappen" : "Sidebar inklappen"}
-      >
-        <svg
-          className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-300", collapsed && "rotate-180")}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-        </svg>
-      </button>
     </aside>
   );
 }
@@ -325,7 +338,7 @@ function MobileSidebar() {
       {/* Drawer */}
       <aside
         className={cn(
-          "md:hidden fixed inset-y-0 left-0 z-50 w-[260px] bg-background border-r flex flex-col transition-transform duration-300",
+          "md:hidden fixed inset-y-0 left-0 z-50 w-[280px] bg-background border-r flex flex-col transition-transform duration-300 overflow-y-auto",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

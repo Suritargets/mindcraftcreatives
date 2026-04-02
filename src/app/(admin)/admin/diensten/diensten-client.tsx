@@ -26,6 +26,17 @@ type Category = {
   name: string;
 };
 
+const exampleDiensten: Record<string, string>[] = [
+  { Naam: "Grafisch Ontwerp", Categorie: "Ontwerp & Design", Beschrijving: "Professioneel grafisch ontwerp voor communicatie-uitingen", Status: "actief" },
+  { Naam: "Logo Design", Categorie: "Ontwerp & Design", Beschrijving: "Unieke logo's die uw merk identiteit versterken", Status: "actief" },
+  { Naam: "Offsetdruk", Categorie: "Drukwerk & Productie", Beschrijving: "Hoogwaardig offsetdrukwerk voor grote oplages", Status: "actief" },
+  { Naam: "Groot Formaat Print", Categorie: "Drukwerk & Productie", Beschrijving: "Banners, roll-ups en groot formaat printwerk", Status: "actief" },
+  { Naam: "Merk Identiteit", Categorie: "Branding & Marketing", Beschrijving: "Complete merkidentiteit ontwikkeling", Status: "actief" },
+  { Naam: "Verpakkingsontwerp", Categorie: "Branding & Marketing", Beschrijving: "Aantrekkelijke verpakkingen die opvallen", Status: "concept" },
+  { Naam: "Gevel Reclame", Categorie: "Signage & Displays", Beschrijving: "Opvallende gevelreclame en lichtreclame", Status: "actief" },
+  { Naam: "Voertuig Belettering", Categorie: "Signage & Displays", Beschrijving: "Professionele voertuigbelettering en wraps", Status: "actief" },
+];
+
 export function DienstenClient({ services, categories }: { services: Service[]; categories: Category[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -64,6 +75,8 @@ export function DienstenClient({ services, categories }: { services: Service[]; 
             ]}
             onImport={(data) => console.log("Import:", data)}
             expectedImportColumns={["Naam", "Categorie"]}
+            exampleData={exampleDiensten}
+            exampleFilename="mindcraft-diensten-voorbeeld"
           />
           <Link href="/admin/diensten/nieuw" className="w-full sm:w-auto">
             <Button className="gap-1.5 w-full sm:w-auto">

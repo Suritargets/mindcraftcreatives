@@ -93,9 +93,17 @@ export async function getPublicPortfolioItems() {
   });
 }
 
-export async function getPublicPortfolioBySlug(slug: string) {
-  return db.portfolioItem.findUnique({
-    where: { slug, status: "GEPUBLICEERD" },
+export async function getPublicPortfolioBySlug(slugOrId: string) {
+  // Try slug first
+  const bySlug = await db.portfolioItem.findUnique({
+    where: { slug: slugOrId, status: "GEPUBLICEERD" },
+    include: { category: true },
+  });
+  if (bySlug) return bySlug;
+
+  // Fallback: try by ID
+  return db.portfolioItem.findFirst({
+    where: { id: slugOrId, status: "GEPUBLICEERD" },
     include: { category: true },
   });
 }

@@ -21,7 +21,7 @@ export default async function WidgetsPage() {
     FLOATING: "floating",
   };
 
-  const widgets: Widget[] = rawWidgets.map((w) => ({
+  const widgets: Widget[] = rawWidgets.map((w: typeof rawWidgets[number]) => ({
     id: w.id,
     name: w.name,
     type: typeMap[w.type] ?? "custom",

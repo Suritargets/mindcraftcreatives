@@ -144,9 +144,20 @@ export async function getPublicProducts() {
   });
 }
 
-export async function getPublicProductBySlug(slug: string) {
-  return db.product.findUnique({
-    where: { slug, status: "ACTIEF" },
+export async function getPublicProductBySlug(slugOrId: string) {
+  // Try slug first
+  const bySlug = await db.product.findUnique({
+    where: { slug: slugOrId, status: "ACTIEF" },
+    include: {
+      category: true,
+      specs: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+  if (bySlug) return bySlug;
+
+  // Fallback: try by ID (for old/admin links)
+  return db.product.findFirst({
+    where: { id: slugOrId, status: "ACTIEF" },
     include: {
       category: true,
       specs: { orderBy: { sortOrder: "asc" } },

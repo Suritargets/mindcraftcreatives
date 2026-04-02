@@ -30,9 +30,7 @@ export function CollapsibleCard({
       <button
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center justify-between text-left transition-colors ${
-          isSidebar
-            ? open ? "px-4 py-3" : "px-4 py-2.5"
-            : open ? "px-5 py-3" : "px-5 py-3"
+          isSidebar ? "px-3 py-2" : "px-4 py-2.5"
         } hover:bg-muted/20 rounded-lg`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -75,7 +73,7 @@ export function CollapsibleCard({
           open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className={isSidebar ? "px-4 pb-3" : "px-5 pb-4"}>
+        <div className={isSidebar ? "px-3 pb-2.5 pt-0.5" : "px-4 pb-3 pt-0.5"}>
           {children}
         </div>
       </div>

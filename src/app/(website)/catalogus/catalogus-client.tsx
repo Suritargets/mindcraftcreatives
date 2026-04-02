@@ -15,12 +15,26 @@ interface CatalogusClientProps {
   products: CatalogProduct[];
   categories: FilterCategory[];
   quickCategories: QuickCategory[];
+  mobileCols?: number;
+  desktopCols?: number;
+  heroBadge?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  heroOverlayOpacity?: number;
 }
 
 export default function CatalogusClient({
   products,
   categories,
   quickCategories,
+  mobileCols = 3,
+  desktopCols = 4,
+  heroBadge = "Promotie Materiaal",
+  heroTitle = "Promotioneel Materiaal Catalogus",
+  heroSubtitle = "Ontdek onze collectie promotionele producten. Alles is volledig aan te passen met uw logo en huisstijl.",
+  heroImage = "",
+  heroOverlayOpacity = 60,
 }: CatalogusClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
@@ -84,17 +98,29 @@ export default function CatalogusClient({
   return (
     <div>
       {/* Page header */}
-      <section className="bg-primary py-12 md:py-16">
-        <div className="container mx-auto px-4 md:px-6 text-center">
+      <section className="relative bg-primary py-12 md:py-16 overflow-hidden">
+        {/* Background image layer */}
+        {heroImage && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${heroImage})` }}
+          />
+        )}
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 bg-primary"
+          style={{ opacity: heroImage ? heroOverlayOpacity / 100 : 1 }}
+        />
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-4 md:px-6 text-center">
           <Badge className="bg-white/20 text-white border-white/20 mb-4">
-            Promotie Materiaal
+            {heroBadge}
           </Badge>
           <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-            Promotioneel Materiaal Catalogus
+            {heroTitle}
           </h1>
           <p className="mt-3 text-white/70 max-w-lg mx-auto">
-            Ontdek onze collectie promotionele producten. Alles is volledig aan
-            te passen met uw logo en huisstijl.
+            {heroSubtitle}
           </p>
         </div>
       </section>
@@ -104,6 +130,8 @@ export default function CatalogusClient({
         quickCategories={quickCategories}
         activeFilter={iconFilter}
         onFilter={handleIconFilter}
+        mobileCols={mobileCols}
+        desktopCols={desktopCols}
       />
 
       {/* Main content: sidebar + product grid */}

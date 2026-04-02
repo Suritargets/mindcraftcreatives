@@ -30,6 +30,19 @@ export type CategoryOption = {
 
 const PAGE_SIZE = 15;
 
+const exampleProducts: Record<string, string>[] = [
+  { Naam: "Custom T-Shirt Bedrukt", Categorie: "Kleding & Hoofddeksels", Subcategorie: "T-Shirts", Beschrijving: "100% katoen, full color bedrukking", "Min. Bestelling": "50 stuks" },
+  { Naam: "Bedrukte Mokken", Categorie: "Mokken & Drinkware", Subcategorie: "Keramiek", Beschrijving: "11oz keramische mok met full wrap print", "Min. Bestelling": "25 stuks" },
+  { Naam: "Gepersonaliseerde Pennen", Categorie: "Kantoorartikelen", Subcategorie: "Schrijfwaren", Beschrijving: "Balpen met bedrijfslogo gravure", "Min. Bestelling": "100 stuks" },
+  { Naam: "Custom Caps / Petten", Categorie: "Kleding & Hoofddeksels", Subcategorie: "Petten", Beschrijving: "Snapback pet met geborduurd logo", "Min. Bestelling": "25 stuks" },
+  { Naam: "Roll-Up Banners", Categorie: "Signage & Displays", Subcategorie: "Banners", Beschrijving: "85x200cm roll-up banner met aluminium cassette", "Min. Bestelling": "1 stuk" },
+  { Naam: "Visitekaartjes Premium", Categorie: "Drukwerk", Subcategorie: "Kaarten", Beschrijving: "350gsm mat gelamineerd, dubbelzijdig full color", "Min. Bestelling": "250 stuks" },
+  { Naam: "Flyers A5", Categorie: "Drukwerk", Subcategorie: "Flyers", Beschrijving: "A5 flyer 170gsm glans, enkelzijdig of dubbelzijdig", "Min. Bestelling": "500 stuks" },
+  { Naam: "Tote Bags Bedrukt", Categorie: "Tassen & Verpakking", Subcategorie: "Katoenen tassen", Beschrijving: "Katoenen draagtas met zeefdruk logo", "Min. Bestelling": "50 stuks" },
+  { Naam: "Sleutelhangers Custom", Categorie: "Promotieartikelen", Subcategorie: "Sleutelhangers", Beschrijving: "Acryl sleutelhanger met full color print", "Min. Bestelling": "50 stuks" },
+  { Naam: "Hoodies Bedrukt", Categorie: "Kleding & Hoofddeksels", Subcategorie: "Hoodies", Beschrijving: "280gsm fleece hoodie met DTG print of borduurwerk", "Min. Bestelling": "25 stuks" },
+];
+
 const statusColors: Record<string, string> = {
   actief: "bg-brand-green/10 text-brand-green border-0",
   concept: "bg-yellow-100 text-yellow-700 border-0",
@@ -90,6 +103,8 @@ export default function ProductenClient({
             ]}
             onImport={(data) => console.log("Import:", data)}
             expectedImportColumns={["Naam", "Categorie"]}
+            exampleData={exampleProducts}
+            exampleFilename="mindcraft-producten-voorbeeld"
           />
           <Link href="/admin/producten/nieuw" className="w-full sm:w-auto">
             <Button className="gap-1.5 w-full sm:w-auto">
@@ -131,16 +146,16 @@ export default function ProductenClient({
       {/* Table */}
       <Card>
         <div className="overflow-hidden">
-          <table className="w-full table-fixed">
+          <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 sm:px-5 py-3">Product</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 hidden md:table-cell w-[140px]">Categorie</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 hidden lg:table-cell w-[130px]">Subcategorie</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 hidden sm:table-cell w-[110px]">Min. Best.</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 hidden lg:table-cell w-[90px]">Status</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-5 py-3 hidden xl:table-cell w-[90px]">Specs</th>
-                <th className="w-10 px-3 py-3"></th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 sm:px-5 py-3 w-[35%]">Product</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden md:table-cell w-[15%]">Categorie</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell w-[15%]">Subcategorie</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden sm:table-cell w-[10%]">Min. Best.</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell w-[10%]">Status</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden xl:table-cell w-[10%]">Specs</th>
+                <th className="w-8 px-2 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -166,26 +181,26 @@ export default function ProductenClient({
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 hidden md:table-cell">
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <span className="text-sm text-foreground truncate block">{product.categoryName || "—"}</span>
                     </td>
-                    <td className="px-5 py-3 hidden lg:table-cell">
+                    <td className="px-4 py-3 hidden lg:table-cell">
                       <span className="text-sm text-muted-foreground truncate block">{product.subcategory || "—"}</span>
                     </td>
-                    <td className="px-5 py-3 hidden sm:table-cell">
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-sm text-foreground">{product.minOrder}</span>
                     </td>
-                    <td className="px-5 py-3 hidden lg:table-cell">
+                    <td className="px-4 py-3 hidden lg:table-cell">
                       <Badge variant="secondary" className={`text-[10px] ${statusColors[product.status]}`}>
                         {statusLabels[product.status]}
                       </Badge>
                     </td>
-                    <td className="px-5 py-3 hidden xl:table-cell">
+                    <td className="px-4 py-3 hidden xl:table-cell">
                       <Badge variant={hasSpecs ? "default" : "outline"} className={`text-[10px] ${hasSpecs ? "bg-primary" : ""}`}>
                         {hasSpecs ? `${product.specsCount} specs` : "Geen"}
                       </Badge>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3">
                       <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                       </svg>

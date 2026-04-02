@@ -9,7 +9,7 @@ export default async function DienstenPage() {
   ]);
 
   // Map to client-friendly format
-  const serviceData = services.map((s) => ({
+  const serviceData = services.map((s: typeof services[number]) => ({
     id: s.id,
     name: s.name,
     slug: s.slug,
@@ -21,7 +21,7 @@ export default async function DienstenPage() {
     features: s.features,
   }));
 
-  const categoryData = categories.map((c) => ({
+  const categoryData = categories.map((c: typeof categories[number]) => ({
     slug: c.slug,
     name: c.name,
   }));

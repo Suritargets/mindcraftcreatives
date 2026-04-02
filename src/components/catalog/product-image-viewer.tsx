@@ -47,8 +47,11 @@ export function ProductImageViewer({
     <>
       <div>
         {/* Main image */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setLightboxOpen(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") setLightboxOpen(true); }}
           className="relative w-full aspect-square rounded-xl bg-gradient-to-br from-muted/50 to-muted border overflow-hidden cursor-zoom-in group"
         >
           {isPlaceholder ? (
@@ -107,7 +110,7 @@ export function ProductImageViewer({
               {activeIndex + 1} / {displayImages.length}
             </div>
           )}
-        </button>
+        </div>
 
         {/* Thumbnail row */}
         {displayImages.length > 1 && (

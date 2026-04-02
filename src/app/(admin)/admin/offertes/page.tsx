@@ -12,7 +12,7 @@ export default async function OffertesPage() {
     AFGEROND: "afgerond",
   };
 
-  const quotes: QuoteRequest[] = rawQuotes.map((q) => ({
+  const quotes: QuoteRequest[] = rawQuotes.map((q: typeof rawQuotes[number]) => ({
     id: q.id,
     quoteNumber: q.quoteNumber,
     company: q.company,
@@ -21,7 +21,7 @@ export default async function OffertesPage() {
     phone: q.phone,
     date: q.date.toISOString().split("T")[0],
     status: statusMap[q.status] ?? "nieuw",
-    items: q.items.map((item) => ({
+    items: q.items.map((item: typeof q.items[number]) => ({
       product: item.productName,
       quantity: item.quantity,
       notes: item.notes ?? undefined,

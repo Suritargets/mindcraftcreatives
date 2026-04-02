@@ -51,9 +51,11 @@ export function ExportCSVButton({ data, filename, columns }: ExportButtonProps) 
 type ImportButtonProps = {
   onImport: (data: Record<string, string>[]) => void;
   expectedColumns?: string[];
+  exampleData?: Record<string, string>[];
+  exampleFilename?: string;
 };
 
-export function ImportCSVButton({ onImport, expectedColumns }: ImportButtonProps) {
+export function ImportCSVButton({ onImport, expectedColumns, exampleData, exampleFilename }: ImportButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ count: number; error?: string } | null>(null);
@@ -121,6 +123,23 @@ export function ImportCSVButton({ onImport, expectedColumns }: ImportButtonProps
     reader.readAsText(file);
   }
 
+  function downloadExample() {
+    if (!exampleData || exampleData.length === 0) return;
+    const cols = Object.keys(exampleData[0]);
+    const header = cols.map((c) => `"${c}"`).join(",");
+    const rows = exampleData.map((row) =>
+      cols.map((c) => `"${(row[c] || "").replace(/"/g, '""')}"`).join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exampleFilename || "voorbeeld"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="inline-flex items-center gap-2 flex-wrap">
       <Button
@@ -135,6 +154,19 @@ export function ImportCSVButton({ onImport, expectedColumns }: ImportButtonProps
         </svg>
         {importing ? "Importeren..." : "Import CSV"}
       </Button>
+      {exampleData && exampleData.length > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={downloadExample}
+          className="gap-1 text-[11px] text-muted-foreground hover:text-foreground h-7 px-2"
+        >
+          <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+          Voorbeeld CSV
+        </Button>
+      )}
       {result && (
         result.error ? (
           <Badge variant="destructive" className="text-[10px]">{result.error}</Badge>
@@ -166,6 +198,8 @@ type ImportExportToolbarProps = {
   exportColumns?: { key: string; label: string }[];
   onImport: (data: Record<string, string>[]) => void;
   expectedImportColumns?: string[];
+  exampleData?: Record<string, string>[];
+  exampleFilename?: string;
 };
 
 export function ImportExportToolbar({
@@ -174,11 +208,18 @@ export function ImportExportToolbar({
   exportColumns,
   onImport,
   expectedImportColumns,
+  exampleData,
+  exampleFilename,
 }: ImportExportToolbarProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <ExportCSVButton data={exportData} filename={exportFilename} columns={exportColumns} />
-      <ImportCSVButton onImport={onImport} expectedColumns={expectedImportColumns} />
+      <ImportCSVButton
+        onImport={onImport}
+        expectedColumns={expectedImportColumns}
+        exampleData={exampleData}
+        exampleFilename={exampleFilename}
+      />
     </div>
   );
 }

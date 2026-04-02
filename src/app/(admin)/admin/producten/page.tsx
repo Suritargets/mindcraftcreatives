@@ -15,7 +15,7 @@ export default async function ProductenPage() {
     GEARCHIVEERD: "gearchiveerd",
   };
 
-  const products: ProductItem[] = rawProducts.map((p) => ({
+  const products: ProductItem[] = rawProducts.map((p: typeof rawProducts[number]) => ({
     id: p.id,
     name: p.name,
     description: p.description,
@@ -27,7 +27,7 @@ export default async function ProductenPage() {
     specsCount: p.specs?.length ?? 0,
   }));
 
-  const categories: CategoryOption[] = rawCategories.map((c) => ({
+  const categories: CategoryOption[] = rawCategories.map((c: typeof rawCategories[number]) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,

@@ -1,5 +1,5 @@
 import { getPublicPortfolioItems, getPublicPortfolioBySlug } from "@/lib/actions/portfolio";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,11 @@ export default async function PortfolioDetailPage({
 
   if (!item) {
     notFound();
+  }
+
+  // If accessed by ID instead of slug, redirect to canonical slug URL
+  if (item.slug !== id) {
+    redirect(`/portfolio/${item.slug}`);
   }
 
   // Get adjacent projects for navigation
