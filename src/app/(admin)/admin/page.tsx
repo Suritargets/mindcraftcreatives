@@ -129,14 +129,14 @@ export default async function AdminDashboard() {
       {/* Stats cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {statCards.map((stat) => (
-          <Link key={stat.label} href={stat.href}>
-            <Card className="hover:border-primary/30 transition-colors">
+          <Link key={stat.label} href={stat.href} className="cursor-pointer group">
+            <Card className="border-l-4 border-l-primary/60 hover:border-l-primary hover:shadow-md transition-all duration-200 group-hover:scale-[1.02]">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
-                  <div className="text-muted-foreground/50">{stat.icon}</div>
+                  <span className="text-sm font-medium text-foreground">{stat.label}</span>
+                  <div className="text-primary/40 group-hover:text-primary transition-colors">{stat.icon}</div>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-3xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
               </CardContent>
             </Card>
@@ -150,14 +150,14 @@ export default async function AdminDashboard() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {quickActions.map((action) => (
-          <Link key={action.title} href={action.href}>
-            <Card className="hover:border-primary/30 hover:shadow-sm transition-all h-full">
+          <Link key={action.title} href={action.href} className="cursor-pointer group">
+            <Card className="hover:shadow-md hover:border-primary/30 transition-all duration-200 h-full group-hover:scale-[1.02]">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`h-10 w-10 rounded-lg ${action.color} flex items-center justify-center`}>
+                  <div className={`h-10 w-10 rounded-lg ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <div className={action.iconColor}>{action.icon}</div>
                   </div>
-                  <h3 className="font-semibold text-sm text-foreground">{action.title}</h3>
+                  <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">{action.title}</h3>
                 </div>
                 <p className="text-xs text-muted-foreground ml-[52px]">{action.desc}</p>
               </CardContent>
