@@ -130,3 +130,26 @@ export async function deleteProduct(id: string) {
   await db.product.delete({ where: { id } });
   revalidatePath("/admin/producten");
 }
+
+// ─── Public queries (filtered by status) ───
+
+export async function getPublicProducts() {
+  return db.product.findMany({
+    where: { status: "ACTIEF" },
+    include: {
+      category: true,
+      specs: { orderBy: { sortOrder: "asc" } },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+export async function getPublicProductBySlug(slug: string) {
+  return db.product.findUnique({
+    where: { slug, status: "ACTIEF" },
+    include: {
+      category: true,
+      specs: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+}

@@ -80,3 +80,13 @@ export async function deleteService(id: string) {
   await db.service.delete({ where: { id } });
   revalidatePath("/admin/diensten");
 }
+
+// ─── Public queries (filtered by status) ───
+
+export async function getPublicServices() {
+  return db.service.findMany({
+    where: { status: "ACTIEF" },
+    include: { category: true },
+    orderBy: { sortOrder: "asc" },
+  });
+}

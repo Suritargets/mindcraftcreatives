@@ -3,10 +3,18 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import type { Product } from "@/lib/catalog-data";
+
+export interface CatalogProduct {
+  slug: string;
+  name: string;
+  categorySlug: string;
+  subcategory: string | null;
+  description: string;
+  minOrder: string;
+}
 
 interface ProductGridProps {
-  products: Product[];
+  products: CatalogProduct[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
@@ -31,7 +39,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {products.map((product) => (
-        <Link key={product.id} href={`/catalogus/${product.id}`}>
+        <Link key={product.slug} href={`/catalogus/${product.slug}`}>
           <Card className="group overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-300 h-full">
             {/* Product image placeholder */}
             <div className="aspect-square bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center relative overflow-hidden">

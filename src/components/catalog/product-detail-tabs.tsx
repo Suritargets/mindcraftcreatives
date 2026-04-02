@@ -2,11 +2,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import type { ProductSpec } from "@/lib/catalog-data";
-
 interface ProductDetailTabsProps {
   description: string;
-  specs?: ProductSpec[];
+  specs?: { label: string; values: string[] }[];
   printMethods?: string[];
   advantages?: string[];
 }

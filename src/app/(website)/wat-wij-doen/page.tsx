@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-import { getSetting } from "@/lib/actions/settings";
 import { HeroSection } from "@/components/sections/hero";
 import { ServicesSection } from "@/components/sections/services";
 import { PortfolioSection } from "@/components/sections/portfolio";
@@ -7,14 +5,7 @@ import { AboutSection } from "@/components/sections/about";
 import { CTASection } from "@/components/sections/cta";
 import { ContactSection } from "@/components/sections/contact";
 
-export default async function Home() {
-  const homepage = await getSetting("homepage");
-
-  // If homepage is set to "catalogus", redirect there
-  if ((homepage || "catalogus") === "catalogus") {
-    redirect("/catalogus");
-  }
-
+export default function WatWijDoenPage() {
   return (
     <>
       <HeroSection />

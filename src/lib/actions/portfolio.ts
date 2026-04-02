@@ -82,3 +82,20 @@ export async function deletePortfolioItem(id: string) {
   await db.portfolioItem.delete({ where: { id } });
   revalidatePath("/admin/portfolio");
 }
+
+// ─── Public queries (filtered by status) ───
+
+export async function getPublicPortfolioItems() {
+  return db.portfolioItem.findMany({
+    where: { status: "GEPUBLICEERD" },
+    include: { category: true },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+export async function getPublicPortfolioBySlug(slug: string) {
+  return db.portfolioItem.findUnique({
+    where: { slug, status: "GEPUBLICEERD" },
+    include: { category: true },
+  });
+}

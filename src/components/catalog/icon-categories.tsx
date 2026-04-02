@@ -1,14 +1,20 @@
 "use client";
 
-import { quickCategories } from "@/lib/catalog-data";
 import { categoryIconMap } from "@/components/icons/category-icons";
 
+export interface QuickCategory {
+  name: string;
+  slug: string;
+  icon: string;
+}
+
 interface IconCategoriesProps {
+  quickCategories: QuickCategory[];
   activeFilter: string | null;
   onFilter: (slug: string | null) => void;
 }
 
-export function IconCategories({ activeFilter, onFilter }: IconCategoriesProps) {
+export function IconCategories({ quickCategories, activeFilter, onFilter }: IconCategoriesProps) {
   const allItems = [
     { slug: null as string | null, name: "Alles", icon: null },
     ...quickCategories.map((c) => ({ slug: c.slug as string | null, name: c.name, icon: c.icon })),

@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { categories } from "@/lib/catalog-data";
 import { QuoteCartSheet } from "@/components/catalog/quote-cart-sheet";
 
-export function Header() {
+export interface HeaderCategory {
+  name: string;
+  slug: string;
+  subcategories: { name: string; slug: string }[];
+}
+
+export function Header({ categories = [], logoHref = "/catalogus" }: { categories?: HeaderCategory[]; logoHref?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(0);
@@ -82,7 +87,7 @@ export function Header() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="shrink-0">
+          <Link href={logoHref} className="shrink-0">
             <Image
               src="/logo.jpeg"
               alt="Mindcraft Creatives"
@@ -152,12 +157,9 @@ export function Header() {
                     </div>
                   </div>
 
-                  <Link href="/" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Home</Link>
                   <Link href="/catalogus" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-primary hover:text-primary/80 transition-colors rounded-md hover:bg-accent">Catalogus</Link>
-                  <Link href="#diensten" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Diensten</Link>
+                  <Link href="/wat-wij-doen" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Wat Wij Doen</Link>
                   <Link href="/portfolio" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Portfolio</Link>
-                  <Link href="#over-ons" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Over Ons</Link>
-                  <Link href="#contact" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-base font-medium text-foreground hover:text-primary transition-colors rounded-md hover:bg-accent">Contact</Link>
 
                   <Separator className="my-3" />
                   <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Categorieën</p>
@@ -198,24 +200,15 @@ export function Header() {
 
           {/* Nav links */}
           <nav className="flex items-center">
-            <Link href="/" className="h-11 px-5 flex items-center text-sm font-medium text-foreground hover:text-primary transition-colors">
-              Home
+            <Link href="/catalogus" className="h-11 px-5 flex items-center text-sm font-medium text-foreground hover:text-primary transition-colors relative">
+              Catalogus
+              <span className="absolute bottom-2 left-5 right-5 h-0.5 bg-primary rounded-full" />
             </Link>
-            <Link href="#diensten" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Diensten
+            <Link href="/wat-wij-doen" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              Wat Wij Doen
             </Link>
             <Link href="/portfolio" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Portfolio
-            </Link>
-            <Link href="/catalogus" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors relative">
-              Volledige Catalogus
-              <span className="absolute bottom-2 left-5 right-5 h-0.5 bg-primary rounded-full" />
-            </Link>
-            <Link href="#over-ons" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Over Ons
-            </Link>
-            <Link href="#contact" className="h-11 px-5 flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              Contact
             </Link>
           </nav>
         </div>

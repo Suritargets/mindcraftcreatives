@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Product } from "@/lib/catalog-data";
+
+interface RelatedProduct {
+  slug: string;
+  name: string;
+  description: string;
+  minOrder: string;
+}
 
 interface RelatedProductsProps {
-  products: Product[];
+  products: RelatedProduct[];
   categoryName: string;
 }
 
@@ -21,7 +27,7 @@ export function RelatedProducts({ products, categoryName }: RelatedProductsProps
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {products.map((product) => (
-          <Link key={product.id} href={`/catalogus/${product.id}`}>
+          <Link key={product.slug} href={`/catalogus/${product.slug}`}>
             <Card className="group overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-300">
               <div className="aspect-square bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center relative">
                 <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">

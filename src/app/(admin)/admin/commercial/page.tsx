@@ -12,7 +12,7 @@ export default async function CommercialPage() {
     SIDEBAR: "sidebar",
   };
 
-  const areas: CommercialArea[] = rawAreas.map((a) => ({
+  const areas: CommercialArea[] = rawAreas.map((a: typeof rawAreas[number]) => ({
     id: a.id,
     name: a.name,
     location: a.location,

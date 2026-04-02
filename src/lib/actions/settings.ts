@@ -32,6 +32,8 @@ export async function updateSettings(data: Record<string, string>, group?: strin
   }
 
   revalidatePath("/admin/instellingen");
+  revalidatePath("/");
+  revalidatePath("/catalogus");
 }
 
 export async function updateSetting(key: string, value: string, group?: string) {

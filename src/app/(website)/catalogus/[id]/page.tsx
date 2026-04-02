@@ -1,4 +1,5 @@
-import { products, categories } from "@/lib/catalog-data";
+import { getPublicProducts, getPublicProductBySlug } from "@/lib/actions/products";
+import { getCategories } from "@/lib/actions/categories";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -8,9 +9,11 @@ import { ProductQuoteForm } from "@/components/catalog/product-quote-form";
 import { RelatedProducts } from "@/components/catalog/related-products";
 import { QuoteCartButton } from "@/components/catalog/quote-cart-button";
 import { ProductDetailTabs } from "@/components/catalog/product-detail-tabs";
+import { ProductImageViewer } from "@/components/catalog/product-image-viewer";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ id: p.id }));
+export async function generateStaticParams() {
+  const products = await getPublicProducts();
+  return products.map((p) => ({ id: p.slug }));
 }
 
 export async function generateMetadata({
@@ -19,11 +22,11 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = products.find((p) => p.id === id);
+  const product = await getPublicProductBySlug(id);
   if (!product) return { title: "Product niet gevonden" };
   return {
-    title: `${product.name} | Mindcraft Creatives`,
-    description: product.description,
+    title: product.metaTitle || `${product.name} | Mindcraft Creatives`,
+    description: product.metaDescription || product.description,
   };
 }
 
@@ -33,21 +36,37 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = products.find((p) => p.id === id);
+  const product = await getPublicProductBySlug(id);
 
   if (!product) {
     notFound();
   }
 
-  const category = categories.find((c) => c.slug === product.category);
-  const subcategory = category?.subcategories.find(
+  const category = product.category;
+
+  // Get all categories to find subcategory name
+  const allCategories = await getCategories("PRODUCT" as const);
+  const parentCat = allCategories.find((c) => c.id === product.categoryId);
+  const subcategory = parentCat?.children.find(
     (s) => s.slug === product.subcategory
   );
 
   // Related products: same category, exclude current
-  const related = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const allProducts = await getPublicProducts();
+  const related = allProducts
+    .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
+    .slice(0, 4)
+    .map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      description: p.description,
+      minOrder: p.minOrder,
+    }));
+
+  const specs = product.specs.map((s) => ({
+    label: s.label,
+    values: s.values as string[],
+  }));
 
   return (
     <div>
@@ -86,36 +105,12 @@ export default async function ProductPage({
 
       <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Product image */}
-          <div>
-            {/* Main image placeholder */}
-            <div className="aspect-square rounded-xl bg-gradient-to-br from-muted/50 to-muted border flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <div className="h-24 w-24 mx-auto rounded-2xl bg-white shadow-md flex items-center justify-center">
-                  <span className="text-primary font-bold text-5xl">M</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Productafbeelding binnenkort
-                </p>
-              </div>
-            </div>
-
-            {/* Thumbnail row placeholder */}
-            <div className="grid grid-cols-4 gap-3 mt-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className={`aspect-square rounded-lg border flex items-center justify-center ${
-                    i === 1
-                      ? "border-primary bg-primary/5"
-                      : "bg-muted/30 hover:border-primary/30 cursor-pointer transition-colors"
-                  }`}
-                >
-                  <span className="text-primary/40 font-bold text-lg">M</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Left: Product image viewer */}
+          <ProductImageViewer
+            productName={product.name}
+            featuredImage={product.featuredImage}
+            gallery={product.gallery as string[]}
+          />
 
           {/* Right: Product info */}
           <div>
@@ -173,13 +168,16 @@ export default async function ProductPage({
                   Kenmerken
                 </h3>
                 <ul className="space-y-2">
-                  {[
-                    "Volledig aanpasbaar met uw logo en huisstijl",
-                    "Hoge kwaliteit materialen",
-                    "Diverse kleuren en maten beschikbaar",
-                    "Inclusief ontwerp-assistentie",
-                    "Snelle levering in Suriname",
-                  ].map((feature) => (
+                  {(product.advantages && product.advantages.length > 0
+                    ? (product.advantages as string[])
+                    : [
+                        "Volledig aanpasbaar met uw logo en huisstijl",
+                        "Hoge kwaliteit materialen",
+                        "Diverse kleuren en maten beschikbaar",
+                        "Inclusief ontwerp-assistentie",
+                        "Snelle levering in Suriname",
+                      ]
+                  ).map((feature) => (
                     <li
                       key={feature}
                       className="flex items-start gap-2 text-sm text-muted-foreground"
@@ -204,7 +202,7 @@ export default async function ProductPage({
 
             {/* Add to quote cart */}
             <QuoteCartButton
-              productId={product.id}
+              productId={product.slug}
               productName={product.name}
               minOrder={product.minOrder}
             />
@@ -212,16 +210,16 @@ export default async function ProductPage({
             <Separator className="my-6" />
 
             {/* Direct quote form */}
-            <ProductQuoteForm productName={product.name} productId={product.id} />
+            <ProductQuoteForm productName={product.name} productId={product.slug} />
           </div>
         </div>
 
-        {/* Product detail tabs (Description, Specs, Printing, How to Order) */}
+        {/* Product detail tabs */}
         <ProductDetailTabs
-          description={product.description}
-          specs={product.specs}
-          printMethods={product.printMethods}
-          advantages={product.advantages}
+          description={product.longDescription || product.description}
+          specs={specs}
+          printMethods={product.printMethods as string[]}
+          advantages={product.advantages as string[]}
         />
 
         {/* Related / suggested products */}

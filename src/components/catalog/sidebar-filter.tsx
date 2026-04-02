@@ -1,9 +1,15 @@
 "use client";
 
-import { categories } from "@/lib/catalog-data";
 import { Separator } from "@/components/ui/separator";
 
+export interface FilterCategory {
+  name: string;
+  slug: string;
+  subcategories: { name: string; slug: string }[];
+}
+
 interface SidebarFilterProps {
+  categories: FilterCategory[];
   activeCategory: string | null;
   activeSubcategory: string | null;
   onCategoryChange: (slug: string | null) => void;
@@ -11,6 +17,7 @@ interface SidebarFilterProps {
 }
 
 export function SidebarFilter({
+  categories,
   activeCategory,
   activeSubcategory,
   onCategoryChange,
