@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const initialState: LoginState = {
   success: false,
@@ -58,6 +59,14 @@ export default function LoginPage() {
               {pending ? "Logging in..." : "Login"}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              &larr; Terug naar website
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
