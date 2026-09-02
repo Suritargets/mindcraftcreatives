@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { contactSubmissions } from "@/drizzle/schema";
 
 export type ContactFormState = {
   success: boolean;
@@ -35,13 +36,12 @@ export async function submitContactForm(
   }
 
   try {
-    await db.contactSubmission.create({
-      data: {
-        name: name.trim(),
-        email: email.trim(),
-        subject: subject.trim(),
-        message: message.trim(),
-      },
+    await db.insert(contactSubmissions).values({
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+      updatedAt: new Date(),
     });
 
     return {

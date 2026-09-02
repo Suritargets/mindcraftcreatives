@@ -1,10 +1,27 @@
-import { PrismaClient } from "@prisma/client";
-import { neon } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { config } from "dotenv";
+import { Pool } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { eq } from "drizzle-orm";
+import * as schema from "./schema";
 
-const sql = neon(process.env.DATABASE_URL!);
-const adapter = new PrismaNeon(sql);
-const prisma = new PrismaClient({ adapter });
+config({ path: ".env.local" });
+config({ path: ".env" });
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+const db = drizzle(pool, { schema });
+
+const {
+  categories,
+  products,
+  productSpecs,
+  services,
+  portfolioItems,
+  quotes,
+  quoteItems,
+  widgets,
+  commercialAreas,
+  settings,
+} = schema;
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -103,19 +120,25 @@ async function main() {
   const catMap: Record<string, string> = {};
 
   for (const cat of productCategories) {
-    const parent = await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: { name: cat.name, icon: cat.icon },
-      create: { name: cat.name, slug: cat.slug, icon: cat.icon, type: "PRODUCT" },
-    });
+    const [parent] = await db
+      .insert(categories)
+      .values({ name: cat.name, slug: cat.slug, icon: cat.icon, type: "PRODUCT", updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: categories.slug,
+        set: { name: cat.name, icon: cat.icon, updatedAt: new Date() },
+      })
+      .returning();
     catMap[cat.slug] = parent.id;
 
     for (const sub of cat.subs) {
-      const child = await prisma.category.upsert({
-        where: { slug: sub.slug },
-        update: { name: sub.name, parentId: parent.id },
-        create: { name: sub.name, slug: sub.slug, icon: cat.icon, type: "PRODUCT", parentId: parent.id },
-      });
+      const [child] = await db
+        .insert(categories)
+        .values({ name: sub.name, slug: sub.slug, icon: cat.icon, type: "PRODUCT", parentId: parent.id, updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: categories.slug,
+          set: { name: sub.name, parentId: parent.id, updatedAt: new Date() },
+        })
+        .returning();
       catMap[sub.slug] = child.id;
     }
   }
@@ -132,11 +155,14 @@ async function main() {
   ];
 
   for (const cat of serviceCategories) {
-    const created = await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: { name: cat.name, icon: cat.icon },
-      create: { name: cat.name, slug: cat.slug, icon: cat.icon, type: "SERVICE" },
-    });
+    const [created] = await db
+      .insert(categories)
+      .values({ name: cat.name, slug: cat.slug, icon: cat.icon, type: "SERVICE", updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: categories.slug,
+        set: { name: cat.name, icon: cat.icon, updatedAt: new Date() },
+      })
+      .returning();
     catMap[cat.slug] = created.id;
   }
 
@@ -153,18 +179,21 @@ async function main() {
   ];
 
   for (const cat of portfolioCategories) {
-    const created = await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: { name: cat.name, icon: cat.icon },
-      create: { name: cat.name, slug: cat.slug, icon: cat.icon, type: "PORTFOLIO" },
-    });
+    const [created] = await db
+      .insert(categories)
+      .values({ name: cat.name, slug: cat.slug, icon: cat.icon, type: "PORTFOLIO", updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: categories.slug,
+        set: { name: cat.name, icon: cat.icon, updatedAt: new Date() },
+      })
+      .returning();
     catMap[cat.slug] = created.id;
   }
 
   // ============================================
   // PRODUCTS
   // ============================================
-  const products = [
+  const productsData = [
     { name: "Custom T-Shirt Bedrukt", slug: "custom-t-shirt-bedrukt", category: "kleding-hoofddeksels", subcategory: "t-shirts", description: "100% katoen, full color bedrukking", minOrder: "50 stuks", printMethods: ["Zeefdruk", "DTG (Direct to Garment)", "Vinyl transfer", "Sublimatie (witte shirts)"], advantages: ["Hoge kwaliteit ringspun katoen", "Pre-shrunk (krimpt niet)", "Dubbel gestikte naden", "Geschikt voor industrieel wassen"], tags: ["Populair", "Bestseller"],
       specs: [
         { label: "Materiaal", values: ["100% ringspun katoen", "180 gsm"] },
@@ -264,41 +293,44 @@ async function main() {
     { name: "Strandhanddoek Bedrukt", slug: "strandhanddoek-bedrukt", category: "paraplu-outdoor", subcategory: "handdoeken", description: "Full color sublimatie", minOrder: "25 stuks", tags: [], specs: [] },
   ];
 
-  for (const p of products) {
+  for (const p of productsData) {
     const categoryId = catMap[p.category];
     if (!categoryId) { console.warn(`Category not found: ${p.category}`); continue; }
 
-    const created = await prisma.product.upsert({
-      where: { slug: p.slug },
-      update: {
-        name: p.name, description: p.description, minOrder: p.minOrder,
-        categoryId, subcategory: p.subcategory,
-        printMethods: p.printMethods || [], advantages: p.advantages || [], tags: p.tags || [],
-      },
-      create: {
+    const [created] = await db
+      .insert(products)
+      .values({
         name: p.name, slug: p.slug, description: p.description, minOrder: p.minOrder,
         categoryId, subcategory: p.subcategory, status: "ACTIEF",
         printMethods: p.printMethods || [], advantages: p.advantages || [], tags: p.tags || [],
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: products.slug,
+        set: {
+          name: p.name, description: p.description, minOrder: p.minOrder,
+          categoryId, subcategory: p.subcategory,
+          printMethods: p.printMethods || [], advantages: p.advantages || [], tags: p.tags || [],
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
 
     // Seed specs
     if (p.specs && p.specs.length > 0) {
-      await prisma.productSpec.deleteMany({ where: { productId: created.id } });
-      for (let i = 0; i < p.specs.length; i++) {
-        await prisma.productSpec.create({
-          data: { productId: created.id, label: p.specs[i].label, values: p.specs[i].values, sortOrder: i },
-        });
-      }
+      await db.delete(productSpecs).where(eq(productSpecs.productId, created.id));
+      await db.insert(productSpecs).values(
+        p.specs.map((s, i) => ({ productId: created.id, label: s.label, values: s.values, sortOrder: i }))
+      );
     }
   }
 
-  console.log(`✅ ${products.length} producten geseeded`);
+  console.log(`✅ ${productsData.length} producten geseeded`);
 
   // ============================================
   // SERVICES
   // ============================================
-  const services = [
+  const servicesData = [
     { name: "Grafisch Ontwerp", slug: "grafisch-ontwerp", category: "ontwerp", description: "Professioneel grafisch ontwerp voor al uw communicatie-uitingen.", icon: "pen", features: ["Logo ontwerp", "Visitekaartjes", "Flyers & Brochures"] },
     { name: "Logo Design", slug: "logo-design", category: "ontwerp", description: "Unieke logo's die uw merk identiteit versterken.", icon: "star", features: ["Concept ontwikkeling", "Variaties", "Stijlgids"] },
     { name: "Offsetdruk", slug: "offsetdruk", category: "drukwerk", description: "Hoogwaardig offsetdrukwerk voor grote oplages.", icon: "printer", features: ["Visitekaartjes", "Brochures", "Posters"] },
@@ -311,23 +343,26 @@ async function main() {
     { name: "Webdesign", slug: "webdesign", category: "digitaal", description: "Moderne en responsieve websites.", icon: "globe", status: "CONCEPT" as const, features: ["Website ontwerp", "Landing pages", "UI/UX"] },
   ];
 
-  for (const s of services) {
+  for (const s of servicesData) {
     const categoryId = catMap[s.category];
-    await prisma.service.upsert({
-      where: { slug: s.slug },
-      update: { name: s.name, description: s.description, icon: s.icon, features: s.features, categoryId },
-      create: {
+    await db
+      .insert(services)
+      .values({
         name: s.name, slug: s.slug, description: s.description, icon: s.icon,
         categoryId, status: s.status || "ACTIEF", features: s.features,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: services.slug,
+        set: { name: s.name, description: s.description, icon: s.icon, features: s.features, categoryId, updatedAt: new Date() },
+      });
   }
-  console.log(`✅ ${services.length} diensten geseeded`);
+  console.log(`✅ ${servicesData.length} diensten geseeded`);
 
   // ============================================
   // PORTFOLIO
   // ============================================
-  const portfolioItems = [
+  const portfolioData = [
     { title: "Rebranding Fernandes Groep", slug: "rebranding-fernandes-groep", description: "Complete merkidentiteit vernieuwing inclusief logo, huisstijl en drukwerk.", category: "pf-branding", mediaType: "SLIDER" as const, images: ["/placeholder-1.jpg", "/placeholder-2.jpg", "/placeholder-3.jpg"], status: "GEPUBLICEERD" as const, client: "Fernandes Groep N.V.", date: "2024-06", tags: ["Logo", "Huisstijl", "Drukwerk"] },
     { title: "Event Merchandise SuriPop", slug: "event-merchandise-suripop", description: "T-shirts, banners en promotional items voor SuriPop festival.", category: "pf-evenement", mediaType: "FOTO" as const, images: ["/placeholder-1.jpg"], status: "GEPUBLICEERD" as const, client: "SuriPop Foundation", date: "2024-05", tags: ["Merchandise", "Festival"] },
     { title: "Voertuig Wrap - Taxi Fleet", slug: "voertuig-wrap-taxi-fleet", description: "Volledige voertuigbelettering voor 15 taxi's in Paramaribo.", category: "pf-signage", mediaType: "VIDEO" as const, videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", images: ["/placeholder-1.jpg"], status: "GEPUBLICEERD" as const, client: "Taxi Centrale Paramaribo", date: "2024-04", tags: ["Wrap", "Voertuig"] },
@@ -336,24 +371,38 @@ async function main() {
     { title: "Social Media Campagne TeleSur", slug: "social-media-campagne-telesur", description: "Maandelijkse social media content creatie.", category: "pf-digitaal", mediaType: "VIDEO" as const, videoUrl: "https://www.youtube.com/watch?v=example", images: ["/placeholder-1.jpg"], status: "GEPUBLICEERD" as const, client: "TeleSur N.V.", date: "2024-01", tags: ["Social Media", "Campagne"] },
   ];
 
-  for (const p of portfolioItems) {
+  for (const p of portfolioData) {
     const categoryId = catMap[p.category];
-    await prisma.portfolioItem.upsert({
-      where: { slug: p.slug },
-      update: { title: p.title, description: p.description, categoryId, mediaType: p.mediaType, videoUrl: p.videoUrl, images: p.images, status: p.status, client: p.client, date: p.date, tags: p.tags },
-      create: {
+    await db
+      .insert(portfolioItems)
+      .values({
         title: p.title, slug: p.slug, description: p.description, categoryId,
         mediaType: p.mediaType, videoUrl: p.videoUrl, images: p.images,
         status: p.status, client: p.client, date: p.date, tags: p.tags,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: portfolioItems.slug,
+        set: { title: p.title, description: p.description, categoryId, mediaType: p.mediaType, videoUrl: p.videoUrl, images: p.images, status: p.status, client: p.client, date: p.date, tags: p.tags, updatedAt: new Date() },
+      });
   }
-  console.log(`✅ ${portfolioItems.length} portfolio items geseeded`);
+  console.log(`✅ ${portfolioData.length} portfolio items geseeded`);
 
   // ============================================
   // QUOTES
   // ============================================
-  const quotes = [
+  type SeedQuote = {
+    quoteNumber: string;
+    company: string;
+    contact: string;
+    email: string;
+    phone: string;
+    status: "NIEUW" | "IN_BEHANDELING" | "OFFERTE_VERSTUURD" | "AFGEROND";
+    internalNotes?: string;
+    items: { productName: string; quantity: number; notes?: string }[];
+  };
+
+  const quotesData: SeedQuote[] = [
     { quoteNumber: "Q-001", company: "TeleSur N.V.", contact: "Ricardo Martinus", email: "r.martinus@telesur.sr", phone: "+597 8123456", status: "NIEUW" as const, items: [{ productName: "Custom T-Shirt Bedrukt", quantity: 200, notes: "Logo op voorzijde, wit" }, { productName: "Baseball Cap Custom", quantity: 100, notes: "Geborduurd logo" }] },
     { quoteNumber: "Q-002", company: "Fernandes Bottling", contact: "Samira Djoe", email: "s.djoe@fernandes.sr", phone: "+597 8654321", status: "IN_BEHANDELING" as const, internalNotes: "Klant wil sample voor goedkeuring. Levertijd bespreken - Samira belt donderdag.", items: [{ productName: "RVS Waterfles", quantity: 500, notes: "Blauw, logo gegraveerd" }, { productName: "Koeltas Bedrukt", quantity: 200 }, { productName: "Katoenen Tote Bag", quantity: 300 }] },
     { quoteNumber: "Q-003", company: "Hakrinbank", contact: "Dennis Wongsoredjo", email: "d.wong@hakrinbank.sr", phone: "+597 7112233", status: "OFFERTE_VERSTUURD" as const, internalNotes: "Offerte verstuurd op 25 maart. Follow-up gepland voor 2 april.", items: [{ productName: "Polo Shirt Met Logo", quantity: 150, notes: "Navy, geborduurd" }, { productName: "Bedrukte Pen", quantity: 500, notes: "Zilver met blauw logo" }, { productName: "Notitieboek A5 Custom", quantity: 300, notes: "Hardcover, full color omslag" }] },
@@ -363,30 +412,36 @@ async function main() {
     { quoteNumber: "Q-007", company: "De Surinaamsche Bank", contact: "Anita Ramdat", email: "a.ramdat@dsb.sr", phone: "+597 7221144", status: "OFFERTE_VERSTUURD" as const, items: [{ productName: "Polo Shirt Met Logo", quantity: 200 }, { productName: "Bedrukte Pen", quantity: 500 }, { productName: "Notitieboek A5 Custom", quantity: 200 }, { productName: "Paraplu Met Logo", quantity: 50 }, { productName: "Travel Mug Thermal", quantity: 50 }] },
   ];
 
-  for (const q of quotes) {
-    const existing = await prisma.quote.findUnique({ where: { quoteNumber: q.quoteNumber } });
+  for (const q of quotesData) {
+    const [existing] = await db.select().from(quotes).where(eq(quotes.quoteNumber, q.quoteNumber)).limit(1);
     if (!existing) {
-      await prisma.quote.create({
-        data: {
-          quoteNumber: q.quoteNumber, company: q.company, contact: q.contact,
-          email: q.email, phone: q.phone, status: q.status,
-          internalNotes: q.internalNotes,
-          items: {
-            create: q.items.map((item, i) => ({
-              productName: item.productName, quantity: item.quantity,
-              notes: item.notes, sortOrder: i,
-            })),
-          },
-        },
+      await db.transaction(async (tx) => {
+        const [quote] = await tx
+          .insert(quotes)
+          .values({
+            quoteNumber: q.quoteNumber, company: q.company, contact: q.contact,
+            email: q.email, phone: q.phone, status: q.status,
+            internalNotes: q.internalNotes,
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        await tx.insert(quoteItems).values(
+          q.items.map((item, i) => ({
+            quoteId: quote.id,
+            productName: item.productName, quantity: item.quantity,
+            notes: item.notes, sortOrder: i,
+          }))
+        );
       });
     }
   }
-  console.log(`✅ ${quotes.length} offertes geseeded`);
+  console.log(`✅ ${quotesData.length} offertes geseeded`);
 
   // ============================================
   // WIDGETS
   // ============================================
-  const widgets = [
+  const widgetsData = [
     { name: "WhatsApp Chat Button", type: "WHATSAPP" as const, position: "FLOATING" as const, enabled: true, config: { nummer: "+5978581854", bericht: "Hallo! Ik heb een vraag.", label: "Chat met ons", kleur: "#25D366" } },
     { name: "Offerte CTA Banner", type: "CTA_BANNER" as const, position: "FOOTER" as const, enabled: true, config: { titel: "Offerte nodig?", tekst: "Vraag vandaag nog een vrijblijvende offerte aan!", knopTekst: "Offerte Aanvragen", link: "#contact" } },
     { name: "Nieuwsbrief Aanmelding", type: "NEWSLETTER" as const, position: "FOOTER" as const, enabled: false, config: { titel: "Blijf op de hoogte", tekst: "Ontvang onze nieuwste aanbiedingen en updates.", placeholder: "Uw e-mailadres", knopTekst: "Aanmelden" } },
@@ -394,40 +449,46 @@ async function main() {
     { name: "Cookie Melding", type: "CUSTOM" as const, position: "POPUP" as const, enabled: true, config: { titel: "Cookies", tekst: "Deze website gebruikt cookies om uw ervaring te verbeteren.", knopTekst: "Accepteren", link: "/privacy" } },
   ];
 
-  for (let i = 0; i < widgets.length; i++) {
-    const w = widgets[i];
-    await prisma.widget.upsert({
-      where: { id: `widget-${i + 1}` },
-      update: { name: w.name, type: w.type, position: w.position, enabled: w.enabled, config: w.config, sortOrder: i },
-      create: { id: `widget-${i + 1}`, name: w.name, type: w.type, position: w.position, enabled: w.enabled, config: w.config, sortOrder: i },
-    });
+  for (let i = 0; i < widgetsData.length; i++) {
+    const w = widgetsData[i];
+    const id = `widget-${i + 1}`;
+    await db
+      .insert(widgets)
+      .values({ id, name: w.name, type: w.type, position: w.position, enabled: w.enabled, config: w.config, sortOrder: i, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: widgets.id,
+        set: { name: w.name, type: w.type, position: w.position, enabled: w.enabled, config: w.config, sortOrder: i, updatedAt: new Date() },
+      });
   }
-  console.log(`✅ ${widgets.length} widgets geseeded`);
+  console.log(`✅ ${widgetsData.length} widgets geseeded`);
 
   // ============================================
   // COMMERCIAL AREAS
   // ============================================
-  const commercialAreas = [
+  const commercialAreasData = [
     { name: "Homepage Hero Banner", location: "Homepage - Boven", type: "BANNER" as const, content: "Speciale aanbieding: 20% korting op alle T-shirts!", linkUrl: "/catalogus/kleding-hoofddeksels", enabled: true },
     { name: "Catalogus Sidebar Promo", location: "Catalogus - Zijbalk", type: "SIDEBAR" as const, content: "Bulk bestelling? Vraag een offerte aan voor extra korting.", linkUrl: "/offerte", enabled: true },
     { name: "Seizoen Popup", location: "Alle pagina's", type: "POPUP" as const, content: "Kerst collectie nu beschikbaar! Bestel voor 1 december voor levering.", linkUrl: "/catalogus", enabled: false },
     { name: "Product Pagina Upsell", location: "Product Detail - Onder", type: "INLINE" as const, content: "Combineer met onze andere producten en bespaar!", linkUrl: "/catalogus", enabled: true },
   ];
 
-  for (let i = 0; i < commercialAreas.length; i++) {
-    const ca = commercialAreas[i];
-    await prisma.commercialArea.upsert({
-      where: { id: `ca-${i + 1}` },
-      update: { name: ca.name, location: ca.location, type: ca.type, content: ca.content, linkUrl: ca.linkUrl, enabled: ca.enabled, sortOrder: i },
-      create: { id: `ca-${i + 1}`, name: ca.name, location: ca.location, type: ca.type, content: ca.content, linkUrl: ca.linkUrl, enabled: ca.enabled, sortOrder: i },
-    });
+  for (let i = 0; i < commercialAreasData.length; i++) {
+    const ca = commercialAreasData[i];
+    const id = `ca-${i + 1}`;
+    await db
+      .insert(commercialAreas)
+      .values({ id, name: ca.name, location: ca.location, type: ca.type, content: ca.content, linkUrl: ca.linkUrl, enabled: ca.enabled, sortOrder: i, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: commercialAreas.id,
+        set: { name: ca.name, location: ca.location, type: ca.type, content: ca.content, linkUrl: ca.linkUrl, enabled: ca.enabled, sortOrder: i, updatedAt: new Date() },
+      });
   }
-  console.log(`✅ ${commercialAreas.length} commercial zones geseeded`);
+  console.log(`✅ ${commercialAreasData.length} commercial zones geseeded`);
 
   // ============================================
   // SETTINGS
   // ============================================
-  const settings = [
+  const settingsData = [
     { key: "bedrijfsnaam", value: "Mindcraft Creatives", group: "bedrijf" },
     { key: "handelsnaam", value: "Mindcraft Creatives", group: "bedrijf" },
     { key: "adres", value: "Paramaribo, Suriname", group: "bedrijf" },
@@ -441,14 +502,16 @@ async function main() {
     { key: "betalingsvoorwaardenTekst", value: "50% aanbetaling, 50% bij levering", group: "offerte" },
   ];
 
-  for (const s of settings) {
-    await prisma.setting.upsert({
-      where: { key: s.key },
-      update: { value: s.value, group: s.group },
-      create: { key: s.key, value: s.value, group: s.group },
-    });
+  for (const s of settingsData) {
+    await db
+      .insert(settings)
+      .values({ key: s.key, value: s.value, group: s.group })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value: s.value, group: s.group },
+      });
   }
-  console.log(`✅ ${settings.length} instellingen geseeded`);
+  console.log(`✅ ${settingsData.length} instellingen geseeded`);
 
   console.log("\n🎉 Database seeding voltooid!");
 }
@@ -459,5 +522,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await pool.end();
   });

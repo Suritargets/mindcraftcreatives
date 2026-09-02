@@ -16,7 +16,7 @@ export default async function PortfolioPage() {
     categoryId: item.categoryId,
     mediaType: item.mediaType.toLowerCase() as "foto" | "slider" | "video",
     videoUrl: item.videoUrl,
-    images: item.images,
+    images: item.images ?? [],
     status: item.status === "GEPUBLICEERD" ? ("gepubliceerd" as const) : ("concept" as const),
   }));
 

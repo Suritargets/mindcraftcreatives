@@ -2,16 +2,15 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { asc, eq } from "drizzle-orm";
+import { commercialAreas } from "@/drizzle/schema";
 
 export async function getCommercialAreas() {
-  const areas = await db.commercialArea.findMany({
-    orderBy: { sortOrder: "asc" },
-  });
-  return areas;
+  return db.select().from(commercialAreas).orderBy(asc(commercialAreas.sortOrder));
 }
 
 export async function getCommercialArea(id: string) {
-  const area = await db.commercialArea.findUnique({ where: { id } });
+  const [area] = await db.select().from(commercialAreas).where(eq(commercialAreas.id, id)).limit(1);
   return area;
 }
 
@@ -23,12 +22,14 @@ export async function createCommercialArea(data: {
   linkUrl: string;
   enabled?: boolean;
 }) {
-  const area = await db.commercialArea.create({
-    data: {
+  const [area] = await db
+    .insert(commercialAreas)
+    .values({
       ...data,
       enabled: data.enabled ?? true,
-    },
-  });
+      updatedAt: new Date(),
+    })
+    .returning();
 
   revalidatePath("/admin/commercial");
   return area;
@@ -45,26 +46,28 @@ export async function updateCommercialArea(
     enabled?: boolean;
   }
 ) {
-  const area = await db.commercialArea.update({
-    where: { id },
-    data,
-  });
+  const [area] = await db
+    .update(commercialAreas)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(commercialAreas.id, id))
+    .returning();
 
   revalidatePath("/admin/commercial");
   return area;
 }
 
 export async function toggleCommercialArea(id: string, enabled: boolean) {
-  const area = await db.commercialArea.update({
-    where: { id },
-    data: { enabled },
-  });
+  const [area] = await db
+    .update(commercialAreas)
+    .set({ enabled, updatedAt: new Date() })
+    .where(eq(commercialAreas.id, id))
+    .returning();
 
   revalidatePath("/admin/commercial");
   return area;
 }
 
 export async function deleteCommercialArea(id: string) {
-  await db.commercialArea.delete({ where: { id } });
+  await db.delete(commercialAreas).where(eq(commercialAreas.id, id));
   revalidatePath("/admin/commercial");
 }

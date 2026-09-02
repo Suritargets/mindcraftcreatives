@@ -18,7 +18,7 @@ export default async function DienstenPage() {
     description: s.description,
     icon: s.icon,
     status: s.status.toLowerCase() as "actief" | "concept" | "gearchiveerd",
-    features: s.features,
+    features: s.features ?? [],
   }));
 
   const categoryData = categories.map((c: typeof categories[number]) => ({

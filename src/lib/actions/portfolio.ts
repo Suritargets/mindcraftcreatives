@@ -2,21 +2,37 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { and, asc, eq } from "drizzle-orm";
+import { portfolioItems, type Category, type PortfolioItem } from "@/drizzle/schema";
+
+type PortfolioItemWithRelations = PortfolioItem & { category: Category };
+type NormalizedPortfolioItem = Omit<PortfolioItemWithRelations, "images" | "tags"> & {
+  images: string[];
+  tags: string[];
+};
+
+function normalizePortfolioItem(p: PortfolioItemWithRelations): NormalizedPortfolioItem {
+  return {
+    ...p,
+    images: p.images ?? [],
+    tags: p.tags ?? [],
+  };
+}
 
 export async function getPortfolioItems() {
-  const items = await db.portfolioItem.findMany({
-    include: { category: true },
-    orderBy: { sortOrder: "asc" },
+  const rows = await db.query.portfolioItems.findMany({
+    with: { category: true },
+    orderBy: asc(portfolioItems.sortOrder),
   });
-  return items;
+  return rows.map(normalizePortfolioItem);
 }
 
 export async function getPortfolioItem(id: string) {
-  const item = await db.portfolioItem.findUnique({
-    where: { id },
-    include: { category: true },
+  const row = await db.query.portfolioItems.findFirst({
+    where: eq(portfolioItems.id, id),
+    with: { category: true },
   });
-  return item;
+  return row ? normalizePortfolioItem(row) : row;
 }
 
 export async function createPortfolioItem(data: {
@@ -35,15 +51,17 @@ export async function createPortfolioItem(data: {
   metaTitle?: string;
   metaDescription?: string;
 }) {
-  const item = await db.portfolioItem.create({
-    data: {
+  const [item] = await db
+    .insert(portfolioItems)
+    .values({
       ...data,
       images: data.images || [],
       tags: data.tags || [],
       mediaType: data.mediaType || "FOTO",
       status: data.status || "CONCEPT",
-    },
-  });
+      updatedAt: new Date(),
+    })
+    .returning();
 
   revalidatePath("/admin/portfolio");
   return item;
@@ -68,10 +86,11 @@ export async function updatePortfolioItem(
     metaDescription?: string;
   }
 ) {
-  const item = await db.portfolioItem.update({
-    where: { id },
-    data,
-  });
+  const [item] = await db
+    .update(portfolioItems)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(portfolioItems.id, id))
+    .returning();
 
   revalidatePath("/admin/portfolio");
   revalidatePath(`/admin/portfolio/${id}`);
@@ -79,31 +98,33 @@ export async function updatePortfolioItem(
 }
 
 export async function deletePortfolioItem(id: string) {
-  await db.portfolioItem.delete({ where: { id } });
+  await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
   revalidatePath("/admin/portfolio");
 }
 
 // ─── Public queries (filtered by status) ───
 
 export async function getPublicPortfolioItems() {
-  return db.portfolioItem.findMany({
-    where: { status: "GEPUBLICEERD" },
-    include: { category: true },
-    orderBy: { sortOrder: "asc" },
+  const rows = await db.query.portfolioItems.findMany({
+    where: eq(portfolioItems.status, "GEPUBLICEERD"),
+    with: { category: true },
+    orderBy: asc(portfolioItems.sortOrder),
   });
+  return rows.map(normalizePortfolioItem);
 }
 
 export async function getPublicPortfolioBySlug(slugOrId: string) {
   // Try slug first
-  const bySlug = await db.portfolioItem.findUnique({
-    where: { slug: slugOrId, status: "GEPUBLICEERD" },
-    include: { category: true },
+  const bySlug = await db.query.portfolioItems.findFirst({
+    where: and(eq(portfolioItems.slug, slugOrId), eq(portfolioItems.status, "GEPUBLICEERD")),
+    with: { category: true },
   });
-  if (bySlug) return bySlug;
+  if (bySlug) return normalizePortfolioItem(bySlug);
 
   // Fallback: try by ID
-  return db.portfolioItem.findFirst({
-    where: { id: slugOrId, status: "GEPUBLICEERD" },
-    include: { category: true },
+  const byId = await db.query.portfolioItems.findFirst({
+    where: and(eq(portfolioItems.id, slugOrId), eq(portfolioItems.status, "GEPUBLICEERD")),
+    with: { category: true },
   });
+  return byId ? normalizePortfolioItem(byId) : byId;
 }

@@ -2,54 +2,64 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { asc, desc, eq } from "drizzle-orm";
+import { quoteItems, quotes } from "@/drizzle/schema";
 
 export async function getQuotes() {
-  const quotes = await db.quote.findMany({
-    include: {
+  return db.query.quotes.findMany({
+    with: {
       items: {
-        include: { product: true },
-        orderBy: { sortOrder: "asc" },
+        with: { product: true },
+        orderBy: asc(quoteItems.sortOrder),
       },
     },
-    orderBy: { date: "desc" },
+    orderBy: desc(quotes.date),
   });
-  return quotes;
 }
 
 export async function getQuote(id: string) {
-  const quote = await db.quote.findUnique({
-    where: { id },
-    include: {
+  return db.query.quotes.findFirst({
+    where: eq(quotes.id, id),
+    with: {
       items: {
-        include: { product: true },
-        orderBy: { sortOrder: "asc" },
+        with: { product: true },
+        orderBy: asc(quoteItems.sortOrder),
       },
     },
   });
-  return quote;
 }
 
 export async function updateQuoteStatus(
   id: string,
   status: "NIEUW" | "IN_BEHANDELING" | "OFFERTE_VERSTUURD" | "AFGEROND"
 ) {
-  const quote = await db.quote.update({
-    where: { id },
-    data: { status },
-  });
+  const [quote] = await db
+    .update(quotes)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(quotes.id, id))
+    .returning();
 
   revalidatePath("/admin/offertes");
   return quote;
 }
 
 export async function updateQuoteNotes(id: string, internalNotes: string) {
-  const quote = await db.quote.update({
-    where: { id },
-    data: { internalNotes },
-  });
+  const [quote] = await db
+    .update(quotes)
+    .set({ internalNotes, updatedAt: new Date() })
+    .where(eq(quotes.id, id))
+    .returning();
 
   revalidatePath("/admin/offertes");
   return quote;
+}
+
+async function nextQuoteNumber() {
+  const lastQuote = await db.query.quotes.findFirst({
+    orderBy: desc(quotes.quoteNumber),
+  });
+  const nextNum = lastQuote ? parseInt(lastQuote.quoteNumber.replace("Q-", "")) + 1 : 1;
+  return `Q-${String(nextNum).padStart(3, "0")}`;
 }
 
 export async function createQuote(data: {
@@ -60,32 +70,33 @@ export async function createQuote(data: {
   items: { productName: string; quantity: number; notes?: string }[];
   internalNotes?: string;
 }) {
-  // Generate quote number
-  const lastQuote = await db.quote.findFirst({
-    orderBy: { quoteNumber: "desc" },
-  });
-  const nextNum = lastQuote
-    ? parseInt(lastQuote.quoteNumber.replace("Q-", "")) + 1
-    : 1;
-  const quoteNumber = `Q-${String(nextNum).padStart(3, "0")}`;
+  const quoteNumber = await nextQuoteNumber();
 
-  const quote = await db.quote.create({
-    data: {
-      quoteNumber,
-      company: data.company,
-      contact: data.contact,
-      email: data.email,
-      phone: data.phone,
-      internalNotes: data.internalNotes,
-      items: {
-        create: data.items.map((item, i) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          notes: item.notes,
-          sortOrder: i,
-        })),
-      },
-    },
+  const quote = await db.transaction(async (tx) => {
+    const [quote] = await tx
+      .insert(quotes)
+      .values({
+        quoteNumber,
+        company: data.company,
+        contact: data.contact,
+        email: data.email,
+        phone: data.phone,
+        internalNotes: data.internalNotes,
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    await tx.insert(quoteItems).values(
+      data.items.map((item, i) => ({
+        quoteId: quote.id,
+        productName: item.productName,
+        quantity: item.quantity,
+        notes: item.notes,
+        sortOrder: i,
+      }))
+    );
+
+    return quote;
   });
 
   revalidatePath("/admin/offertes");
@@ -93,7 +104,7 @@ export async function createQuote(data: {
 }
 
 export async function deleteQuote(id: string) {
-  await db.quote.delete({ where: { id } });
+  await db.delete(quotes).where(eq(quotes.id, id));
   revalidatePath("/admin/offertes");
 }
 
@@ -138,38 +149,35 @@ export async function submitQuoteRequest(
   }
 
   try {
-    // Generate quote number
-    const lastQuote = await db.quote.findFirst({
-      orderBy: { quoteNumber: "desc" },
-    });
-    const nextNum = lastQuote
-      ? parseInt(lastQuote.quoteNumber.replace("Q-", "")) + 1
-      : 1;
-    const quoteNumber = `Q-${String(nextNum).padStart(3, "0")}`;
+    const quoteNumber = await nextQuoteNumber();
 
     // Look up the product to link it if possible
     const productIdStr = typeof productId === "string" ? productId.trim() : undefined;
 
-    await db.quote.create({
-      data: {
-        quoteNumber,
-        company: "-",
-        contact: (name as string).trim(),
-        email: (email as string).trim(),
-        phone: typeof phone === "string" ? phone.trim() : "",
-        status: "NIEUW",
-        items: {
-          create: [
-            {
-              productId: productIdStr || undefined,
-              productName: (productName as string).trim(),
-              quantity: qty,
-              notes: typeof notes === "string" && notes.trim() ? notes.trim() : undefined,
-              sortOrder: 0,
-            },
-          ],
+    await db.transaction(async (tx) => {
+      const [quote] = await tx
+        .insert(quotes)
+        .values({
+          quoteNumber,
+          company: "-",
+          contact: (name as string).trim(),
+          email: (email as string).trim(),
+          phone: typeof phone === "string" ? phone.trim() : "",
+          status: "NIEUW",
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      await tx.insert(quoteItems).values([
+        {
+          quoteId: quote.id,
+          productId: productIdStr || null,
+          productName: (productName as string).trim(),
+          quantity: qty,
+          notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
+          sortOrder: 0,
         },
-      },
+      ]);
     });
 
     return {

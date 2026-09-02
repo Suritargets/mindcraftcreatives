@@ -2,21 +2,39 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { asc, eq } from "drizzle-orm";
+import { services, type Category, type Service } from "@/drizzle/schema";
+
+type ServiceWithRelations = Service & { category: Category };
+type NormalizedService = Omit<ServiceWithRelations, "features" | "gallery" | "tags"> & {
+  features: string[];
+  gallery: string[];
+  tags: string[];
+};
+
+function normalizeService(s: ServiceWithRelations): NormalizedService {
+  return {
+    ...s,
+    features: s.features ?? [],
+    gallery: s.gallery ?? [],
+    tags: s.tags ?? [],
+  };
+}
 
 export async function getServices() {
-  const services = await db.service.findMany({
-    include: { category: true },
-    orderBy: { sortOrder: "asc" },
+  const rows = await db.query.services.findMany({
+    with: { category: true },
+    orderBy: asc(services.sortOrder),
   });
-  return services;
+  return rows.map(normalizeService);
 }
 
 export async function getService(id: string) {
-  const service = await db.service.findUnique({
-    where: { id },
-    include: { category: true },
+  const row = await db.query.services.findFirst({
+    where: eq(services.id, id),
+    with: { category: true },
   });
-  return service;
+  return row ? normalizeService(row) : row;
 }
 
 export async function createService(data: {
@@ -34,15 +52,17 @@ export async function createService(data: {
   metaTitle?: string;
   metaDescription?: string;
 }) {
-  const service = await db.service.create({
-    data: {
+  const [service] = await db
+    .insert(services)
+    .values({
       ...data,
       features: data.features || [],
       gallery: data.gallery || [],
       tags: data.tags || [],
       status: data.status || "ACTIEF",
-    },
-  });
+      updatedAt: new Date(),
+    })
+    .returning();
 
   revalidatePath("/admin/diensten");
   return service;
@@ -66,10 +86,11 @@ export async function updateService(
     metaDescription?: string;
   }
 ) {
-  const service = await db.service.update({
-    where: { id },
-    data,
-  });
+  const [service] = await db
+    .update(services)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(services.id, id))
+    .returning();
 
   revalidatePath("/admin/diensten");
   revalidatePath(`/admin/diensten/${id}`);
@@ -77,16 +98,17 @@ export async function updateService(
 }
 
 export async function deleteService(id: string) {
-  await db.service.delete({ where: { id } });
+  await db.delete(services).where(eq(services.id, id));
   revalidatePath("/admin/diensten");
 }
 
 // ─── Public queries (filtered by status) ───
 
 export async function getPublicServices() {
-  return db.service.findMany({
-    where: { status: "ACTIEF" },
-    include: { category: true },
-    orderBy: { sortOrder: "asc" },
+  const rows = await db.query.services.findMany({
+    where: eq(services.status, "ACTIEF"),
+    with: { category: true },
+    orderBy: asc(services.sortOrder),
   });
+  return rows.map(normalizeService);
 }

@@ -2,38 +2,61 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { and, asc, eq } from "drizzle-orm";
+import { productSpecs, products, type Category, type Product, type ProductSpec } from "@/drizzle/schema";
+
+type ProductWithRelations = Product & { category: Category; specs: ProductSpec[] };
+type NormalizedProductSpec = Omit<ProductSpec, "values"> & { values: string[] };
+type NormalizedProduct = Omit<ProductWithRelations, "gallery" | "printMethods" | "advantages" | "tags" | "specs"> & {
+  gallery: string[];
+  printMethods: string[];
+  advantages: string[];
+  tags: string[];
+  specs: NormalizedProductSpec[];
+};
+
+function normalizeProduct(p: ProductWithRelations): NormalizedProduct {
+  return {
+    ...p,
+    gallery: p.gallery ?? [],
+    printMethods: p.printMethods ?? [],
+    advantages: p.advantages ?? [],
+    tags: p.tags ?? [],
+    specs: p.specs.map((s) => ({ ...s, values: s.values ?? [] })),
+  };
+}
 
 export async function getProducts() {
-  const products = await db.product.findMany({
-    include: {
+  const rows = await db.query.products.findMany({
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
-    orderBy: { sortOrder: "asc" },
+    orderBy: asc(products.sortOrder),
   });
-  return products;
+  return rows.map(normalizeProduct);
 }
 
 export async function getProduct(id: string) {
-  const product = await db.product.findUnique({
-    where: { id },
-    include: {
+  const row = await db.query.products.findFirst({
+    where: eq(products.id, id),
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
   });
-  return product;
+  return row ? normalizeProduct(row) : row;
 }
 
 export async function getProductBySlug(slug: string) {
-  const product = await db.product.findUnique({
-    where: { slug },
-    include: {
+  const row = await db.query.products.findFirst({
+    where: eq(products.slug, slug),
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
   });
-  return product;
+  return row ? normalizeProduct(row) : row;
 }
 
 export async function createProduct(data: {
@@ -56,24 +79,32 @@ export async function createProduct(data: {
 }) {
   const { specs, ...productData } = data;
 
-  const product = await db.product.create({
-    data: {
-      ...productData,
-      gallery: productData.gallery || [],
-      printMethods: productData.printMethods || [],
-      advantages: productData.advantages || [],
-      tags: productData.tags || [],
-      status: productData.status || "ACTIEF",
-      specs: specs
-        ? {
-            create: specs.map((s, i) => ({
-              label: s.label,
-              values: s.values,
-              sortOrder: i,
-            })),
-          }
-        : undefined,
-    },
+  const product = await db.transaction(async (tx) => {
+    const [product] = await tx
+      .insert(products)
+      .values({
+        ...productData,
+        gallery: productData.gallery || [],
+        printMethods: productData.printMethods || [],
+        advantages: productData.advantages || [],
+        tags: productData.tags || [],
+        status: productData.status || "ACTIEF",
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (specs?.length) {
+      await tx.insert(productSpecs).values(
+        specs.map((s, i) => ({
+          productId: product.id,
+          label: s.label,
+          values: s.values,
+          sortOrder: i,
+        }))
+      );
+    }
+
+    return product;
   });
 
   revalidatePath("/admin/producten");
@@ -103,23 +134,26 @@ export async function updateProduct(
 ) {
   const { specs, ...productData } = data;
 
-  // Update specs if provided
+  // Update specs if provided (not transactional, matching prior behavior)
   if (specs) {
-    await db.productSpec.deleteMany({ where: { productId: id } });
-    await db.productSpec.createMany({
-      data: specs.map((s, i) => ({
-        productId: id,
-        label: s.label,
-        values: s.values,
-        sortOrder: i,
-      })),
-    });
+    await db.delete(productSpecs).where(eq(productSpecs.productId, id));
+    if (specs.length) {
+      await db.insert(productSpecs).values(
+        specs.map((s, i) => ({
+          productId: id,
+          label: s.label,
+          values: s.values,
+          sortOrder: i,
+        }))
+      );
+    }
   }
 
-  const product = await db.product.update({
-    where: { id },
-    data: productData,
-  });
+  const [product] = await db
+    .update(products)
+    .set({ ...productData, updatedAt: new Date() })
+    .where(eq(products.id, id))
+    .returning();
 
   revalidatePath("/admin/producten");
   revalidatePath(`/admin/producten/${id}`);
@@ -127,40 +161,42 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string) {
-  await db.product.delete({ where: { id } });
+  await db.delete(products).where(eq(products.id, id));
   revalidatePath("/admin/producten");
 }
 
 // ─── Public queries (filtered by status) ───
 
 export async function getPublicProducts() {
-  return db.product.findMany({
-    where: { status: "ACTIEF" },
-    include: {
+  const rows = await db.query.products.findMany({
+    where: eq(products.status, "ACTIEF"),
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
-    orderBy: { sortOrder: "asc" },
+    orderBy: asc(products.sortOrder),
   });
+  return rows.map(normalizeProduct);
 }
 
 export async function getPublicProductBySlug(slugOrId: string) {
   // Try slug first
-  const bySlug = await db.product.findUnique({
-    where: { slug: slugOrId, status: "ACTIEF" },
-    include: {
+  const bySlug = await db.query.products.findFirst({
+    where: and(eq(products.slug, slugOrId), eq(products.status, "ACTIEF")),
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
   });
-  if (bySlug) return bySlug;
+  if (bySlug) return normalizeProduct(bySlug);
 
   // Fallback: try by ID (for old/admin links)
-  return db.product.findFirst({
-    where: { id: slugOrId, status: "ACTIEF" },
-    include: {
+  const byId = await db.query.products.findFirst({
+    where: and(eq(products.id, slugOrId), eq(products.status, "ACTIEF")),
+    with: {
       category: true,
-      specs: { orderBy: { sortOrder: "asc" } },
+      specs: { orderBy: asc(productSpecs.sortOrder) },
     },
   });
+  return byId ? normalizeProduct(byId) : byId;
 }
